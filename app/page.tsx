@@ -1,31 +1,58 @@
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-6">
-      
-      <h1 className="text-4xl font-bold text-center text-blue-700 mb-6">
-        MedCareer Platform
-      </h1>
+    <div className="min-h-screen bg-white text-neutral-900 flex flex-col">
 
-      <p className="text-lg text-center max-w-2xl text-gray-600 mb-8">
-        India’s Medical Job Portal for MBBS, BDS, BAMS, BHMS, BUMS,
-        MD/MS, DM/MCh (Super Speciality), Nursing and Allied Healthcare Professionals.
-      </p>
+      {/* Header */}
+      <header className="w-full flex justify-between items-center px-10 py-6">
+        <h1 className="text-xl font-semibold tracking-tight">
+          MedCareer
+        </h1>
+        <div className="space-x-6 text-sm text-neutral-600">
+          <a href="/login" className="hover:text-black transition">
+            Login
+          </a>
+          <a href="/register" className="hover:text-black transition">
+            Register
+          </a>
+        </div>
+      </header>
 
-      <div className="flex gap-4">
-        <a
-          href="/register"
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-        >
-          Register
-        </a>
+      {/* Hero Section */}
+      <main className="flex flex-1 flex-col items-center justify-center text-center px-6">
 
-        <a
-          href="/login"
-          className="px-6 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition"
-        >
-          Login
-        </a>
-      </div>
+        <h2 className="text-5xl font-semibold tracking-tight max-w-3xl leading-tight">
+          Medical Careers.
+          <br />
+          Reimagined.
+        </h2>
+
+        <p className="mt-6 text-lg text-neutral-500 max-w-2xl">
+          A refined job platform built exclusively for MBBS, BDS, BAMS, BHMS,
+          BUMS, MD/MS, DM/MCh, Nursing and allied healthcare professionals.
+        </p>
+
+        <div className="mt-10 flex gap-6">
+          <a
+            href="/register"
+            className="px-6 py-3 bg-black text-white rounded-full text-sm hover:opacity-80 transition"
+          >
+            Get Started
+          </a>
+
+          <a
+            href="/jobs"
+            className="px-6 py-3 border border-neutral-300 rounded-full text-sm hover:bg-neutral-100 transition"
+          >
+            Browse Jobs
+          </a>
+        </div>
+
+      </main>
+
+      {/* Footer */}
+      <footer className="text-center text-sm text-neutral-400 py-6">
+        © {new Date().getFullYear()} MedCareer. All rights reserved.
+      </footer>
 
     </div>
   );
