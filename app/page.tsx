@@ -33,7 +33,7 @@ export default function Home() {
 
         <div className="mt-10 flex gap-6">
           <a
-            href="/register"
+            href="/auth"
             className="px-6 py-3 bg-black text-white rounded-full text-sm hover:opacity-80 transition"
           >
             Get Started
