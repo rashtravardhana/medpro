@@ -8,10 +8,10 @@ export default function Home() {
           MedCareer
         </h1>
         <div className="space-x-6 text-sm text-neutral-600">
-          <a href="/login" className="hover:text-black transition">
+          <a href="/auth" className="hover:text-black transition">
             Login
           </a>
-          <a href="/register" className="hover:text-black transition">
+          <a href="/auth" className="hover:text-black transition">
             Register
           </a>
         </div>
