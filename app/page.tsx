@@ -8,19 +8,12 @@ export default function Home() {
           MedCareer
         </h1>
 
-        <div className="space-x-6 text-sm text-neutral-600">
+        <div className="text-sm text-neutral-600">
           <a
-            href="/auth?mode=login"
+            href="/auth"
             className="hover:text-black transition"
           >
-            Login
-          </a>
-
-          <a
-            href="/auth?mode=register"
-            className="hover:text-black transition"
-          >
-            Register
+            Login / Register
           </a>
         </div>
       </header>
@@ -41,7 +34,7 @@ export default function Home() {
 
         <div className="mt-10 flex gap-6">
           <a
-            href="/auth?mode=register"
+            href="/auth"
             className="px-6 py-3 bg-black text-white rounded-full text-sm hover:opacity-80 transition"
           >
             Get Started
