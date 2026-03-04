@@ -5,6 +5,7 @@ import supabase from "@/lib/supabase";
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -17,6 +18,8 @@ export default function JobsPage() {
       } else {
         setJobs(data || []);
       }
+
+      setLoading(false);
     };
 
     fetchJobs();
@@ -29,7 +32,12 @@ export default function JobsPage() {
       </h1>
 
       <div className="max-w-3xl mx-auto space-y-6">
-        {jobs.length === 0 ? (
+
+        {loading ? (
+          <p className="text-center text-neutral-500">
+            Loading jobs...
+          </p>
+        ) : jobs.length === 0 ? (
           <p className="text-center text-neutral-500">
             No jobs available.
           </p>
@@ -40,16 +48,22 @@ export default function JobsPage() {
               className="border border-neutral-200 rounded-xl p-6 hover:shadow-md transition"
             >
               <h2 className="text-xl font-semibold">{job.title}</h2>
+
               <p className="text-neutral-600 mt-1">
                 {job.hospital_name} • {job.location}
               </p>
-              <p className="text-neutral-500 mt-3">{job.description}</p>
+
+              <p className="text-neutral-500 mt-3">
+                {job.description}
+              </p>
+
               <p className="text-sm text-neutral-400 mt-3">
                 Salary: {job.salary}
               </p>
             </div>
           ))
         )}
+
       </div>
     </div>
   );
