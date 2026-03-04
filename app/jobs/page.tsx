@@ -60,9 +60,10 @@ export default function JobsPage() {
           </p>
         ) : (
           jobs.map((job) => (
-            <div
+            <a
               key={job.id}
-              className="border border-neutral-200 rounded-2xl p-8 hover:shadow-lg transition duration-300"
+              href={`/jobs/${job.id}`}
+              className="block border border-neutral-200 rounded-2xl p-8 hover:shadow-lg transition duration-300"
             >
               <h2 className="text-2xl font-semibold tracking-tight">
                 {job.title}
@@ -79,7 +80,7 @@ export default function JobsPage() {
               <div className="mt-6 text-sm text-neutral-400">
                 Salary: {job.salary}
               </div>
-            </div>
+            </a>
           ))
         )}
 
