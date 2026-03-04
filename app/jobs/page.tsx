@@ -40,8 +40,10 @@ export default function JobsPage() {
               className="border border-neutral-200 rounded-xl p-6 hover:shadow-md transition"
             >
               <h2 className="text-xl font-semibold">{job.title}</h2>
-              <p className="text-neutral-600 mt-2">{job.company}</p>
-              <p className="text-neutral-500 mt-2">{job.description}</p>
+              <p className="text-neutral-600 mt-1">
+                {job.hospital_name} • {job.location}
+              </p>
+              <p className="text-neutral-500 mt-3">{job.description}</p>
               <p className="text-sm text-neutral-400 mt-3">
                 Salary: {job.salary}
               </p>
