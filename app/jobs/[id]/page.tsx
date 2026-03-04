@@ -1,17 +1,41 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import supabase from "@/lib/supabase";
 
-interface Props {
-  params: {
-    id: string;
-  };
-}
+export default function JobDetail() {
+  const params = useParams();
+  const id = params?.id as string;
 
-export default async function JobDetail({ params }: Props) {
-  const { data: job } = await supabase
-    .from("jobs")
-    .select("*")
-    .eq("id", params.id)
-    .single();
+  const [job, setJob] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJob = async () => {
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (!error) {
+        setJob(data);
+      }
+
+      setLoading(false);
+    };
+
+    if (id) fetchJob();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <p className="text-neutral-500 text-lg">Loading...</p>
+      </div>
+    );
+  }
 
   if (!job) {
     return (
