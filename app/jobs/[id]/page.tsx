@@ -29,12 +29,11 @@ export default function JobDetail() {
 
   const applyJob = async () => {
     const { error } = await supabase.from("applications").insert([
-      {
-        job_id: id,
-        doctor_id: crypto.randomUUID(),
-        status: "pending",
-      },
-    ]);
+  {
+    job_id: id,
+    status: "pending",
+  },
+]);
 
     if (error) {
       setMessage("Application failed");
