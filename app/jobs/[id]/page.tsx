@@ -14,11 +14,15 @@ export default function JobDetail() {
 
   useEffect(() => {
     const fetchJob = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("jobs")
         .select("*")
         .eq("id", id)
         .single();
+
+      if (error) {
+        console.log(error);
+      }
 
       setJob(data);
       setLoading(false);
@@ -29,35 +33,20 @@ export default function JobDetail() {
 
   const applyJob = async () => {
 
-    const doctorId = crypto.randomUUID();
-
-    // check if already applied
-    const { data: existing } = await supabase
-      .from("applications")
-      .select("*")
-      .eq("job_id", id)
-      .eq("doctor_id", doctorId)
-      .maybeSingle();
-
-    if (existing) {
-      setMessage("You already applied for this job.");
-      return;
-    }
-
     const { error } = await supabase
       .from("applications")
       .insert([
         {
           job_id: id,
-          doctor_id: doctorId,
           status: "pending",
         },
       ]);
 
     if (error) {
-      setMessage("Application failed.");
+      console.log(error);
+      setMessage("Application failed");
     } else {
-      setMessage("Application submitted successfully.");
+      setMessage("Application submitted successfully");
     }
   };
 
