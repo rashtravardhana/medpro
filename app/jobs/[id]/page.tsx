@@ -31,7 +31,7 @@ export default function JobDetail() {
     const { error } = await supabase.from("applications").insert([
       {
         job_id: id,
-        doctor_id: "1",
+        doctor_id: crypto.randomUUID(),
         status: "pending",
       },
     ]);
