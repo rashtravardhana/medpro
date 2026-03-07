@@ -42,12 +42,26 @@ export default function JobDetail() {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    // If user not logged in → redirect to login page
+    // If user not logged in
     if (!user) {
       window.location.href = "/auth";
       return;
     }
 
+    // Check if already applied
+    const { data: existingApplication } = await supabase
+      .from("applications")
+      .select("*")
+      .eq("job_id", id)
+      .eq("doctor_id", user.id)
+      .single();
+
+    if (existingApplication) {
+      setMessage("You already applied to this job.");
+      return;
+    }
+
+    // Insert application
     const { error } = await supabase
       .from("applications")
       .insert([
@@ -60,9 +74,9 @@ export default function JobDetail() {
 
     if (error) {
       console.log(error);
-      setMessage("Application failed");
+      setMessage("Application failed.");
     } else {
-      setMessage("Application submitted successfully");
+      setMessage("Application submitted successfully.");
     }
 
   };
