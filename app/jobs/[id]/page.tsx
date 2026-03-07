@@ -13,7 +13,7 @@ export default function JobDetail() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
-  // fetch job details
+  // Fetch job details
   useEffect(() => {
 
     const fetchJob = async () => {
@@ -37,14 +37,14 @@ export default function JobDetail() {
   }, [id]);
 
 
-
-  // apply for job
+  // Apply for job
   const applyJob = async () => {
 
     const { data: { user } } = await supabase.auth.getUser();
 
+    // If user not logged in → redirect to login page
     if (!user) {
-      setMessage("Please login before applying.");
+      window.location.href = "/auth";
       return;
     }
 
