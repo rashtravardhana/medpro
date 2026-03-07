@@ -14,15 +14,7 @@ export default function ApplicationsPage() {
 
       const { data, error } = await supabase
         .from("applications")
-        .select(`
-          id,
-          status,
-          jobs (
-            title,
-            hospital_name,
-            location
-          )
-        `);
+        .select("*");
 
       if (error) {
         console.log(error);
@@ -30,7 +22,6 @@ export default function ApplicationsPage() {
 
       setApplications(data || []);
       setLoading(false);
-
     };
 
     fetchApplications();
@@ -40,58 +31,37 @@ export default function ApplicationsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center">
         Loading applications...
       </div>
     );
   }
 
-
   return (
-    <div className="min-h-screen bg-white px-6 py-20">
+    <div className="min-h-screen flex flex-col items-center justify-center">
 
-      <div className="max-w-3xl mx-auto">
+      <h1 className="text-3xl font-semibold mb-8">
+        My Applications
+      </h1>
 
-        <h1 className="text-4xl font-semibold mb-10">
-          My Applications
-        </h1>
+      {applications.length === 0 ? (
 
-        {applications.length === 0 ? (
+        <p>No applications yet.</p>
 
-          <p className="text-neutral-500">
-            No applications yet.
-          </p>
+      ) : (
 
-        ) : (
+        applications.map((app) => (
 
-          applications.map((app) => (
+          <div key={app.id} className="border p-4 rounded-lg mb-4">
+            Job ID: {app.job_id}
+            <br />
+            Status: {app.status}
+          </div>
 
-            <div
-              key={app.id}
-              className="border rounded-xl p-6 mb-6"
-            >
+        ))
 
-              <h2 className="text-xl font-semibold">
-                {app.jobs?.title}
-              </h2>
-
-              <p className="text-neutral-500 mt-1">
-                {app.jobs?.hospital_name} • {app.jobs?.location}
-              </p>
-
-              <p className="mt-4 text-sm text-neutral-400">
-                Status: {app.status}
-              </p>
-
-            </div>
-
-          ))
-
-        )}
-
-      </div>
+      )}
 
     </div>
   );
-
 }
