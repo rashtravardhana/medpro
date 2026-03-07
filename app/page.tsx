@@ -17,6 +17,10 @@ export default function Home() {
             My Applications
           </a>
 
+          <a href="/post-job" className="hover:text-black transition">
+            Post Job
+          </a>
+
           <a href="/auth" className="hover:text-black transition">
             Login / Register
           </a>
@@ -50,6 +54,13 @@ export default function Home() {
             className="px-6 py-3 border border-neutral-300 rounded-full text-sm hover:bg-neutral-100 transition"
           >
             My Applications
+          </a>
+
+          <a
+            href="/post-job"
+            className="px-6 py-3 border border-neutral-300 rounded-full text-sm hover:bg-neutral-100 transition"
+          >
+            Post Job
           </a>
         </div>
 
