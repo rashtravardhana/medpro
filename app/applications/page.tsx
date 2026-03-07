@@ -36,7 +36,7 @@ export default function ApplicationsPage() {
     <div className="min-h-screen bg-white flex flex-col items-center justify-center">
 
       <h1 className="text-3xl font-semibold mb-8">
-        My Applications
+        My  Applications
       </h1>
 
       {applications.length === 0 ? (
