@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import supabase from "@/lib/supabase";
 
 export default function JobDetail() {
+
   const params = useParams();
   const id = params?.id as string;
 
@@ -12,8 +13,11 @@ export default function JobDetail() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
+  // fetch job details
   useEffect(() => {
+
     const fetchJob = async () => {
+
       const { data, error } = await supabase
         .from("jobs")
         .select("*")
@@ -29,17 +33,29 @@ export default function JobDetail() {
     };
 
     if (id) fetchJob();
+
   }, [id]);
 
+
+
+  // apply for job
   const applyJob = async () => {
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      setMessage("Please login before applying.");
+      return;
+    }
 
     const { error } = await supabase
       .from("applications")
       .insert([
         {
           job_id: id,
+          doctor_id: user.id,
           status: "pending",
-        },
+        }
       ]);
 
     if (error) {
@@ -48,7 +64,9 @@ export default function JobDetail() {
     } else {
       setMessage("Application submitted successfully");
     }
+
   };
+
 
   if (loading) {
     return (
@@ -58,6 +76,7 @@ export default function JobDetail() {
     );
   }
 
+
   if (!job) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -66,8 +85,10 @@ export default function JobDetail() {
     );
   }
 
+
   return (
     <div className="min-h-screen bg-white px-6 py-20">
+
       <div className="max-w-3xl mx-auto">
 
         <h1 className="text-4xl font-semibold">
@@ -100,6 +121,8 @@ export default function JobDetail() {
         )}
 
       </div>
+
     </div>
   );
+
 }
