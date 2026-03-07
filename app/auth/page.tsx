@@ -1,3 +1,4 @@
+th2"}
 "use client";
 
 import { useState } from "react";
@@ -8,21 +9,44 @@ export default function AuthPage() {
 
   const router = useRouter();
 
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("doctor");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [message, setMessage] = useState("");
 
   // REGISTER
   const handleRegister = async () => {
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: email,
       password: password
     });
 
     if (error) {
       setMessage(error.message);
-    } else {
+      return;
+    }
+
+    if (data.user) {
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert([
+          {
+            id: data.user.id,
+            name: name,
+            role: role
+          }
+        ]);
+
+      if (profileError) {
+        setMessage(profileError.message);
+        return;
+      }
+
       setMessage("Registration successful. You can now login.");
     }
 
@@ -42,7 +66,6 @@ export default function AuthPage() {
 
       setMessage("Login successful");
 
-      // IMPORTANT: redirect to jobs page
       router.push("/jobs");
 
     }
@@ -57,6 +80,23 @@ export default function AuthPage() {
         <h1 className="text-3xl font-semibold mb-6 text-center">
           Login / Register
         </h1>
+
+        <input
+          type="text"
+          placeholder="Full Name"
+          className="w-full border p-3 rounded mb-4"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+
+        <select
+          className="w-full border p-3 rounded mb-4"
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+        >
+          <option value="doctor">Doctor</option>
+          <option value="admin">Hospital Admin</option>
+        </select>
 
         <input
           type="email"
@@ -97,5 +137,3 @@ export default function AuthPage() {
       </div>
 
     </div>
-  );
-}
