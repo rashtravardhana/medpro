@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "@/lib/supabase";
@@ -9,13 +10,10 @@ export default function AuthPage() {
 
   const [name, setName] = useState("");
   const [role, setRole] = useState("doctor");
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [message, setMessage] = useState("");
 
-  // REGISTER
   const handleRegister = async () => {
 
     const { data, error } = await supabase.auth.signUp({
@@ -46,11 +44,11 @@ export default function AuthPage() {
       }
 
       setMessage("Registration successful. You can now login.");
+
     }
 
   };
 
-  // LOGIN
   const handleLogin = async () => {
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -60,17 +58,16 @@ export default function AuthPage() {
 
     if (error) {
       setMessage(error.message);
-    } else {
-
-      setMessage("Login successful");
-
-      router.push("/jobs");
-
+      return;
     }
+
+    setMessage("Login successful");
+    router.push("/jobs");
 
   };
 
   return (
+
     <div className="min-h-screen flex items-center justify-center bg-white">
 
       <div className="w-full max-w-md p-8 border rounded-xl">
@@ -135,3 +132,6 @@ export default function AuthPage() {
       </div>
 
     </div>
+
+  );
+}
