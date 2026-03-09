@@ -6,132 +6,160 @@ import supabase from "@/lib/supabase";
 
 export default function AuthPage() {
 
-  const router = useRouter();
+const router = useRouter();
 
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("doctor");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+const [name,setName] = useState("");
+const [role,setRole] = useState("doctor");
+const [degree,setDegree] = useState("");
+const [email,setEmail] = useState("");
+const [password,setPassword] = useState("");
+const [message,setMessage] = useState("");
 
-  const handleRegister = async () => {
 
-    const { data, error } = await supabase.auth.signUp({
-      email: email,
-      password: password
-    });
+// REGISTER
+const handleRegister = async () => {
 
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
+const { data,error } = await supabase.auth.signUp({
+email: email,
+password: password
+})
 
-    if (data.user) {
+if(error){
+setMessage(error.message)
+return
+}
 
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert([
-          {
-            id: data.user.id,
-            name: name,
-            role: role
-          }
-        ]);
+if(data.user){
 
-      if (profileError) {
-        setMessage(profileError.message);
-        return;
-      }
+const { error:profileError } = await supabase
+.from("profiles")
+.insert([
+{
+id: data.user.id,
+name: name,
+role: role,
+degree: degree
+}
+])
 
-      setMessage("Registration successful. You can now login.");
+if(profileError){
+setMessage(profileError.message)
+return
+}
 
-    }
+setMessage("Registration successful. Please login.")
+}
 
-  };
+}
 
-  const handleLogin = async () => {
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password
-    });
+// LOGIN
+const handleLogin = async () => {
 
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
+const { data,error } = await supabase.auth.signInWithPassword({
+email: email,
+password: password
+})
 
-    setMessage("Login successful");
-    router.push("/jobs");
+if(error){
+setMessage(error.message)
+return
+}
 
-  };
+const user = data.user
 
-  return (
+const { data:profile } = await supabase
+.from("profiles")
+.select("role")
+.eq("id",user.id)
+.single()
 
-    <div className="min-h-screen flex items-center justify-center bg-white">
+if(profile?.role === "admin"){
+router.push("/admin/dashboard")
+}else{
+router.push("/jobs")
+}
 
-      <div className="w-full max-w-md p-8 border rounded-xl">
+}
 
-        <h1 className="text-3xl font-semibold mb-6 text-center">
-          Login / Register
-        </h1>
 
-        <input
-          type="text"
-          placeholder="Full Name"
-          className="w-full border p-3 rounded mb-4"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+return(
 
-        <select
-          className="w-full border p-3 rounded mb-4"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        >
-          <option value="doctor">Doctor</option>
-          <option value="admin">Hospital Admin</option>
-        </select>
+<div className="min-h-screen flex items-center justify-center bg-white">
 
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full border p-3 rounded mb-4"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+<div className="w-full max-w-md p-8 border rounded-xl">
 
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full border p-3 rounded mb-6"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+<h1 className="text-3xl font-semibold mb-6 text-center">
+Login / Register
+</h1>
 
-        <button
-          onClick={handleLogin}
-          className="w-full bg-black text-white py-3 rounded mb-3"
-        >
-          Login
-        </button>
+<input
+type="text"
+placeholder="Full Name"
+className="w-full border p-3 rounded mb-4"
+value={name}
+onChange={(e)=>setName(e.target.value)}
+/>
 
-        <button
-          onClick={handleRegister}
-          className="w-full border py-3 rounded"
-        >
-          Register
-        </button>
+<select
+className="w-full border p-3 rounded mb-4"
+value={role}
+onChange={(e)=>setRole(e.target.value)}
+>
 
-        {message && (
-          <p className="mt-4 text-center text-sm text-neutral-600">
-            {message}
-          </p>
-        )}
+<option value="doctor">Doctor</option>
+<option value="admin">Hospital Admin</option>
 
-      </div>
+</select>
 
-    </div>
+<input
+type="text"
+placeholder="Medical Degree"
+className="w-full border p-3 rounded mb-4"
+value={degree}
+onChange={(e)=>setDegree(e.target.value)}
+/>
 
-  );
+<input
+type="email"
+placeholder="Email"
+className="w-full border p-3 rounded mb-4"
+value={email}
+onChange={(e)=>setEmail(e.target.value)}
+/>
+
+<input
+type="password"
+placeholder="Password"
+className="w-full border p-3 rounded mb-6"
+value={password}
+onChange={(e)=>setPassword(e.target.value)}
+/>
+
+<button
+onClick={handleLogin}
+className="w-full bg-black text-white py-3 rounded mb-3"
+>
+Login
+</button>
+
+<button
+onClick={handleRegister}
+className="w-full border py-3 rounded"
+>
+Register
+</button>
+
+{message && (
+<p className="mt-4 text-center text-sm text-neutral-600">
+{message}
+</p>
+)}
+
+</div>
+
+</div>
+
+)
+
 }
