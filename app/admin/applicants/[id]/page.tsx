@@ -13,29 +13,36 @@ export default function ApplicantsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-
-    const fetchApplications = async () => {
-
-      const { data, error } = await supabase
-        .from("applications")
-        .select("*")
-        .eq("job_id", jobId);
-
-      if (error) {
-        console.log(error);
-      }
-
-      setApplications(data || []);
-      setLoading(false);
-
-    };
-
     if (jobId) {
       fetchApplications();
     }
-
   }, [jobId]);
 
+  // FETCH APPLICATIONS WITH DOCTOR PROFILE
+  const fetchApplications = async () => {
+
+    const { data, error } = await supabase
+      .from("applications")
+      .select(`
+        id,
+        status,
+        profiles (
+          name,
+          role
+        )
+      `)
+      .eq("job_id", jobId);
+
+    if (error) {
+      console.log(error);
+      return;
+    }
+
+    setApplications(data || []);
+    setLoading(false);
+  };
+
+  // UPDATE APPLICATION STATUS
   const updateStatus = async (id: string, status: string) => {
 
     const { error } = await supabase
@@ -53,7 +60,6 @@ export default function ApplicantsPage() {
         app.id === id ? { ...app, status } : app
       )
     );
-
   };
 
   if (loading) {
@@ -73,7 +79,7 @@ export default function ApplicantsPage() {
 
       {applications.length === 0 && (
         <p className="text-neutral-500">
-          No applications yet.
+          No applications yet
         </p>
       )}
 
@@ -86,11 +92,15 @@ export default function ApplicantsPage() {
             className="border p-6 rounded-lg"
           >
 
-            <p className="text-lg">
-              Doctor ID: {app.doctor_id}
+            <p className="text-lg font-semibold">
+              Doctor: {app.profiles?.name}
             </p>
 
-            <p className="text-neutral-500 mt-2">
+            <p className="text-neutral-500 mt-1">
+              Role: {app.profiles?.role}
+            </p>
+
+            <p className="mt-2">
               Status: {app.status}
             </p>
 
