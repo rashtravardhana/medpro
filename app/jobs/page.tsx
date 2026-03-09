@@ -1,90 +1,149 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import supabase from "@/lib/supabase";
+import { useEffect, useState } from "react"
+import supabase from "@/lib/supabase"
 
-export default function JobsPage() {
-  const [jobs, setJobs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function JobsPage(){
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      const { data, error } = await supabase
-        .from("jobs")
-        .select("*")
-        .order("created_at", { ascending: false });
+const [jobs,setJobs] = useState<any[]>([])
+const [loading,setLoading] = useState(true)
 
-      if (!error) {
-        setJobs(data || []);
-      }
+useEffect(()=>{
+fetchJobs()
+},[])
 
-      setLoading(false);
-    };
 
-    fetchJobs();
-  }, []);
+// FETCH JOBS
+const fetchJobs = async () => {
 
-  return (
-    <div className="min-h-screen bg-white px-6 py-20">
-      
-      {/* Header */}
-      <div className="max-w-4xl mx-auto text-center mb-16">
-        <h1 className="text-5xl font-semibold tracking-tight">
-          Browse Opportunities
-        </h1>
-        <p className="mt-4 text-lg text-neutral-500">
-          Discover curated medical careers across leading hospitals.
-        </p>
-      </div>
+const { data,error } = await supabase
+.from("jobs")
+.select("*")
+.order("created_at",{ascending:false})
 
-      <div className="max-w-3xl mx-auto space-y-8">
+if(error){
+console.log(error)
+}else{
+setJobs(data || [])
+}
 
-        {/* Apple Style Skeleton Loader */}
-        {loading ? (
-          <div className="space-y-8">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="border border-neutral-200 rounded-2xl p-8 animate-pulse"
-              >
-                <div className="h-6 bg-neutral-200 rounded w-1/3 mb-5"></div>
-                <div className="h-4 bg-neutral-200 rounded w-1/4 mb-4"></div>
-                <div className="h-4 bg-neutral-200 rounded w-full mb-2"></div>
-                <div className="h-4 bg-neutral-200 rounded w-5/6"></div>
-              </div>
-            ))}
-          </div>
-        ) : jobs.length === 0 ? (
-          <p className="text-center text-neutral-500 text-lg">
-            No positions available at the moment.
-          </p>
-        ) : (
-          jobs.map((job) => (
-            <a
-              key={job.id}
-              href={`/jobs/${job.id}`}
-              className="block border border-neutral-200 rounded-2xl p-8 hover:shadow-lg transition duration-300"
-            >
-              <h2 className="text-2xl font-semibold tracking-tight">
-                {job.title}
-              </h2>
+setLoading(false)
+}
 
-              <p className="mt-2 text-neutral-500">
-                {job.hospital_name} • {job.location}
-              </p>
 
-              <p className="mt-6 text-neutral-600 leading-relaxed">
-                {job.description}
-              </p>
+// APPLY JOB
+const applyJob = async (jobId:string)=>{
 
-              <div className="mt-6 text-sm text-neutral-400">
-                Salary: {job.salary}
-              </div>
-            </a>
-          ))
-        )}
+const { data:{user} } = await supabase.auth.getUser()
 
-      </div>
-    </div>
-  );
+if(!user){
+alert("Please login first")
+return
+}
+
+
+// CHECK IF ALREADY APPLIED
+const { data:existing } = await supabase
+.from("applications")
+.select("id")
+.eq("job_id",jobId)
+.eq("doctor_id",user.id)
+.single()
+
+
+if(existing){
+alert("You already applied for this job")
+return
+}
+
+
+// INSERT APPLICATION
+const { error } = await supabase
+.from("applications")
+.insert([
+{
+job_id:jobId,
+doctor_id:user.id,
+status:"pending"
+}
+])
+
+if(error){
+alert(error.message)
+}else{
+alert("Application submitted successfully")
+}
+
+}
+
+
+
+if(loading){
+return(
+<div className="p-10">
+<p>Loading jobs...</p>
+</div>
+)
+}
+
+
+
+return(
+
+<div className="p-10">
+
+<h1 className="text-3xl mb-8 font-semibold">
+Available Jobs
+</h1>
+
+{jobs.length === 0 && (
+<p>No jobs available</p>
+)}
+
+<div className="space-y-6">
+
+{jobs.map((job)=>(
+<div
+key={job.id}
+className="border p-6 rounded-lg"
+>
+
+<h2 className="text-xl font-semibold">
+{job.title}
+</h2>
+
+<p className="text-neutral-500">
+{job.hospital_name}
+</p>
+
+<p>
+Location: {job.location}
+</p>
+
+<p>
+Salary: {job.salary}
+</p>
+
+<p className="mt-2 text-sm text-neutral-600">
+{job.description}
+</p>
+
+<button
+onClick={()=>applyJob(job.id)}
+className="mt-4 bg-black text-white px-4 py-2 rounded"
+>
+
+Apply
+
+</button>
+
+</div>
+))}
+
+</div>
+
+</div>
+
+)
+
 }
