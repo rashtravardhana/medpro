@@ -10,9 +10,23 @@ export default function PostJobPage() {
   const [location, setLocation] = useState("");
   const [salary, setSalary] = useState("");
   const [description, setDescription] = useState("");
+  const [profession, setProfession] = useState("");
+
   const [message, setMessage] = useState("");
 
   const postJob = async () => {
+
+    const { data:{user} } = await supabase.auth.getUser();
+
+    if(!user){
+      setMessage("Login required");
+      return;
+    }
+
+    if(!title || !hospital || !location || !profession){
+      setMessage("Please fill all required fields");
+      return;
+    }
 
     const { error } = await supabase
       .from("jobs")
@@ -22,7 +36,9 @@ export default function PostJobPage() {
           hospital_name: hospital,
           location: location,
           salary: salary,
-          description: description
+          description: description,
+          profession: profession,
+          admin_id: user.id
         }
       ]);
 
@@ -30,12 +46,15 @@ export default function PostJobPage() {
       console.log(error);
       setMessage("Job posting failed");
     } else {
+
       setMessage("Job posted successfully");
+
       setTitle("");
       setHospital("");
       setLocation("");
       setSalary("");
       setDescription("");
+      setProfession("");
     }
 
   };
@@ -80,6 +99,25 @@ export default function PostJobPage() {
           value={salary}
           onChange={(e) => setSalary(e.target.value)}
         />
+
+        {/* PROFESSION SELECT */}
+
+        <select
+          className="w-full border p-3 rounded mb-4"
+          value={profession}
+          onChange={(e)=>setProfession(e.target.value)}
+        >
+
+          <option value="">Select Profession</option>
+          <option value="MBBS">MBBS</option>
+          <option value="BDS">BDS</option>
+          <option value="BAMS">BAMS</option>
+          <option value="BHMS">BHMS</option>
+          <option value="BUMS">BUMS</option>
+          <option value="Nursing">Nursing</option>
+          <option value="Allied Healthcare">Allied Healthcare</option>
+
+        </select>
 
         <textarea
           placeholder="Job Description"
