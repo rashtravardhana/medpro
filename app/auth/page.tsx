@@ -10,7 +10,8 @@ const router = useRouter();
 
 const [name,setName] = useState("");
 const [role,setRole] = useState("doctor");
-const [degree,setDegree] = useState("");
+const [profession,setProfession] = useState("");
+
 const [email,setEmail] = useState("");
 const [password,setPassword] = useState("");
 const [message,setMessage] = useState("");
@@ -38,7 +39,7 @@ const { error:profileError } = await supabase
 id: data.user.id,
 name: name,
 role: role,
-degree: degree
+profession: profession
 }
 ])
 
@@ -112,13 +113,22 @@ onChange={(e)=>setRole(e.target.value)}
 
 </select>
 
-<input
-type="text"
-placeholder="Medical Degree"
+<select
 className="w-full border p-3 rounded mb-4"
-value={degree}
-onChange={(e)=>setDegree(e.target.value)}
-/>
+value={profession}
+onChange={(e)=>setProfession(e.target.value)}
+>
+
+<option value="">Select Profession</option>
+<option value="MBBS">MBBS</option>
+<option value="BDS">BDS</option>
+<option value="BAMS">BAMS</option>
+<option value="BHMS">BHMS</option>
+<option value="BUMS">BUMS</option>
+<option value="Nursing">Nursing</option>
+<option value="Allied Healthcare">Allied Healthcare</option>
+
+</select>
 
 <input
 type="email"
