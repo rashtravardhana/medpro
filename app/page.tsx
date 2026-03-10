@@ -36,9 +36,9 @@ export default function Home() {
           Reimagined.
         </h2>
 
+        {/* SHORT DESCRIPTION */}
         <p className="mt-6 text-lg text-neutral-500 max-w-2xl">
-          A refined job platform built exclusively for MBBS, BDS, BAMS, BHMS,
-          BUMS, MD/MS, DM/MCh, Nursing and allied healthcare professionals.
+          A modern job platform connecting healthcare professionals with hospitals and clinics.
         </p>
 
         <div className="mt-10 flex gap-6">
