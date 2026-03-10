@@ -17,17 +17,27 @@ const [password,setPassword] = useState("");
 const [message,setMessage] = useState("");
 
 
-// REGISTER
+// REGISTER USER
 const handleRegister = async () => {
+
+if(!name || !email || !password){
+setMessage("Please fill all required fields");
+return;
+}
+
+if(role === "doctor" && !profession){
+setMessage("Please select your profession");
+return;
+}
 
 const { data,error } = await supabase.auth.signUp({
 email: email,
 password: password
-})
+});
 
 if(error){
-setMessage(error.message)
-return
+setMessage(error.message);
+return;
 }
 
 if(data.user){
@@ -39,49 +49,50 @@ const { error:profileError } = await supabase
 id: data.user.id,
 name: name,
 role: role,
-profession: profession
+profession: role === "doctor" ? profession : null
 }
-])
+]);
 
 if(profileError){
-setMessage(profileError.message)
-return
+setMessage(profileError.message);
+return;
 }
 
-setMessage("Registration successful. Please login.")
-}
+setMessage("Registration successful. Please login.");
 
 }
 
+};
 
-// LOGIN
+
+// LOGIN USER
 const handleLogin = async () => {
 
 const { data,error } = await supabase.auth.signInWithPassword({
 email: email,
 password: password
-})
+});
 
 if(error){
-setMessage(error.message)
-return
+setMessage(error.message);
+return;
 }
 
-const user = data.user
+const user = data.user;
 
 const { data:profile } = await supabase
 .from("profiles")
 .select("role")
 .eq("id",user.id)
-.single()
+.single();
 
 if(profile?.role === "admin"){
-router.push("/admin/dashboard")
+router.push("/admin/dashboard");
 }else{
-router.push("/jobs")
+router.push("/jobs");
 }
 
-}
+};
 
 
 return(
@@ -107,11 +118,14 @@ className="w-full border p-3 rounded mb-4"
 value={role}
 onChange={(e)=>setRole(e.target.value)}
 >
-
 <option value="doctor">Doctor</option>
 <option value="admin">Hospital Admin</option>
-
 </select>
+
+
+{/* Profession only visible for doctors */}
+
+{role === "doctor" && (
 
 <select
 className="w-full border p-3 rounded mb-4"
@@ -129,6 +143,8 @@ onChange={(e)=>setProfession(e.target.value)}
 <option value="Allied Healthcare">Allied Healthcare</option>
 
 </select>
+
+)}
 
 <input
 type="email"
