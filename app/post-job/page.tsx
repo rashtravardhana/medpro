@@ -11,58 +11,55 @@ export default function PostJobPage() {
   const [salary, setSalary] = useState("");
   const [description, setDescription] = useState("");
   const [profession, setProfession] = useState("");
-
   const [message, setMessage] = useState("");
 
   const postJob = async () => {
 
     setMessage("");
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // GET LOGGED USER
+    const { data, error: userError } = await supabase.auth.getUser();
+    const user = data?.user;
 
     if(userError || !user){
       setMessage("Login required");
       return;
     }
 
+    // VALIDATION
     if(!title || !hospital || !location || !profession){
       setMessage("Please fill all required fields");
       return;
     }
 
+    // INSERT JOB
     const { error } = await supabase
       .from("jobs")
-      .insert([
-        {
-          title: title,
-          hospital_name: hospital,
-          location: location,
-          salary: salary,
-          description: description,
-          profession: profession,
-          admin_id: user.id
-        }
-      ]);
+      .insert({
+        title: title,
+        hospital_name: hospital,
+        location: location,
+        salary: salary,
+        description: description,
+        profession: profession,
+        admin_id: user.id
+      });
 
     if(error){
-
       console.log("Supabase Error:", error);
-
       setMessage(error.message);
-
-    } else {
-
-      setMessage("Job posted successfully");
-
-      setTitle("");
-      setHospital("");
-      setLocation("");
-      setSalary("");
-      setDescription("");
-      setProfession("");
-
+      return;
     }
 
+    // SUCCESS
+    setMessage("Job posted successfully");
+
+    setTitle("");
+    setHospital("");
+    setLocation("");
+    setSalary("");
+    setDescription("");
+    setProfession("");
   };
 
   return (
@@ -112,7 +109,6 @@ export default function PostJobPage() {
           value={profession}
           onChange={(e)=>setProfession(e.target.value)}
         >
-
           <option value="">Select Profession</option>
           <option value="MBBS">MBBS</option>
           <option value="BDS">BDS</option>
@@ -121,7 +117,6 @@ export default function PostJobPage() {
           <option value="BUMS">BUMS</option>
           <option value="Nursing">Nursing</option>
           <option value="Allied Healthcare">Allied Healthcare</option>
-
         </select>
 
         <textarea
