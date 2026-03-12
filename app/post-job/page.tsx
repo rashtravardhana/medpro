@@ -16,9 +16,11 @@ export default function PostJobPage() {
 
   const postJob = async () => {
 
-    const { data:{user} } = await supabase.auth.getUser();
+    setMessage("");
 
-    if(!user){
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if(userError || !user){
       setMessage("Login required");
       return;
     }
@@ -42,9 +44,12 @@ export default function PostJobPage() {
         }
       ]);
 
-    if (error) {
-      console.log(error);
-      setMessage("Job posting failed");
+    if(error){
+
+      console.log("Supabase Error:", error);
+
+      setMessage(error.message);
+
     } else {
 
       setMessage("Job posted successfully");
@@ -55,11 +60,13 @@ export default function PostJobPage() {
       setSalary("");
       setDescription("");
       setProfession("");
+
     }
 
   };
 
   return (
+
     <div className="min-h-screen bg-white px-6 py-20">
 
       <div className="max-w-xl mx-auto">
@@ -73,7 +80,7 @@ export default function PostJobPage() {
           placeholder="Job Title"
           className="w-full border p-3 rounded mb-4"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e)=>setTitle(e.target.value)}
         />
 
         <input
@@ -81,7 +88,7 @@ export default function PostJobPage() {
           placeholder="Hospital Name"
           className="w-full border p-3 rounded mb-4"
           value={hospital}
-          onChange={(e) => setHospital(e.target.value)}
+          onChange={(e)=>setHospital(e.target.value)}
         />
 
         <input
@@ -89,7 +96,7 @@ export default function PostJobPage() {
           placeholder="Location"
           className="w-full border p-3 rounded mb-4"
           value={location}
-          onChange={(e) => setLocation(e.target.value)}
+          onChange={(e)=>setLocation(e.target.value)}
         />
 
         <input
@@ -97,10 +104,8 @@ export default function PostJobPage() {
           placeholder="Salary"
           className="w-full border p-3 rounded mb-4"
           value={salary}
-          onChange={(e) => setSalary(e.target.value)}
+          onChange={(e)=>setSalary(e.target.value)}
         />
-
-        {/* PROFESSION SELECT */}
 
         <select
           className="w-full border p-3 rounded mb-4"
@@ -123,7 +128,7 @@ export default function PostJobPage() {
           placeholder="Job Description"
           className="w-full border p-3 rounded mb-4"
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={(e)=>setDescription(e.target.value)}
         />
 
         <button
@@ -134,7 +139,7 @@ export default function PostJobPage() {
         </button>
 
         {message && (
-          <p className="mt-4 text-green-600">
+          <p className="mt-4 text-center text-red-600">
             {message}
           </p>
         )}
@@ -142,5 +147,6 @@ export default function PostJobPage() {
       </div>
 
     </div>
+
   );
 }
