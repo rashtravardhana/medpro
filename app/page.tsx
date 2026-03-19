@@ -1,20 +1,60 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import supabase from "@/lib/supabase";
+
 export default function Home() {
+
+  const [user, setUser] = useState(null);
+
+  // CHECK LOGIN
+  useEffect(() => {
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data?.user || null);
+    };
+    getUser();
+  }, []);
+
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">
 
       {/* HEADER */}
       <header className="w-full flex justify-between items-center px-10 py-6 border-b">
-        <h1 className="text-xl font-semibold">MedCareer</h1>
+
+        <h1 className="text-xl font-semibold">
+          MedCareer
+        </h1>
 
         <div className="space-x-6 text-sm text-gray-600">
-          <a href="/jobs" className="hover:text-black">Explore Jobs</a>
-          <a href="/post-job" className="hover:text-black">Post Job</a>
-          <a href="/auth" className="hover:text-black">Login / Register</a>
+
+          {/* 👇 SHOW ONLY AFTER LOGIN */}
+          {user && (
+            <>
+              <a href="/jobs" className="hover:text-black">
+                Explore Jobs
+              </a>
+
+              <a href="/post-job" className="hover:text-black">
+                Post Job
+              </a>
+            </>
+          )}
+
+          {/* 👇 SHOW ONLY BEFORE LOGIN */}
+          {!user && (
+            <a href="/auth" className="hover:text-black">
+              Login / Register
+            </a>
+          )}
+
         </div>
+
       </header>
 
       {/* HERO */}
       <section className="text-center px-6 py-28">
+
         <h2 className="text-6xl font-semibold leading-tight max-w-4xl mx-auto">
           The Future of Medical Careers.
         </h2>
@@ -24,20 +64,53 @@ export default function Home() {
         </p>
 
         <div className="mt-10 flex gap-6 justify-center flex-wrap">
-          <a href="/auth" className="px-8 py-3 bg-black text-white rounded-full hover:opacity-80">
-            Get Started
-          </a>
 
-          <a href="/jobs" className="px-8 py-3 border rounded-full hover:bg-gray-100">
-            Explore Jobs
-          </a>
+          {/* BEFORE LOGIN */}
+          {!user && (
+            <>
+              <a
+                href="/auth"
+                className="px-8 py-3 bg-black text-white rounded-full"
+              >
+                Get Started
+              </a>
+
+              <a
+                href="/auth"
+                className="px-8 py-3 border rounded-full"
+              >
+                Login
+              </a>
+            </>
+          )}
+
+          {/* AFTER LOGIN */}
+          {user && (
+            <>
+              <a
+                href="/jobs"
+                className="px-8 py-3 bg-black text-white rounded-full"
+              >
+                Explore Jobs
+              </a>
+
+              <a
+                href="/post-job"
+                className="px-8 py-3 border rounded-full"
+              >
+                Post Job
+              </a>
+            </>
+          )}
+
         </div>
+
       </section>
 
       {/* HERO IMAGE */}
       <section className="px-6">
         <img
-          src="https://images.unsplash.com/photo-1576091160550-2173dba999ef"
+          src="https://images.unsplash.com/photo-1580281657527-47c0b6b3a1f4?q=80&w=1200&auto=format&fit=crop"
           className="w-full h-[400px] object-cover rounded-2xl"
         />
       </section>
@@ -46,10 +119,9 @@ export default function Home() {
       <section className="px-10 py-24">
         <div className="grid md:grid-cols-3 gap-12 text-center">
 
-          {/* CARD 1 */}
-          <div className="hover:scale-105 transition">
+          <div>
             <img
-              src="https://images.unsplash.com/photo-1600959907703-125ba1374a12"
+              src="https://images.unsplash.com/photo-1588776814546-ec7e3f1a8f17?q=80&w=800&auto=format&fit=crop"
               className="rounded-xl mb-4 h-48 w-full object-cover"
             />
             <h3 className="text-xl font-semibold">Built for Doctors</h3>
@@ -58,10 +130,9 @@ export default function Home() {
             </p>
           </div>
 
-          {/* CARD 2 */}
-          <div className="hover:scale-105 transition">
+          <div>
             <img
-              src="https://images.unsplash.com/photo-1584982751601-97dcc096659c"
+              src="https://images.unsplash.com/photo-1579154204601-01588f351e67?q=80&w=800&auto=format&fit=crop"
               className="rounded-xl mb-4 h-48 w-full object-cover"
             />
             <h3 className="text-xl font-semibold">For Hospitals</h3>
@@ -70,10 +141,9 @@ export default function Home() {
             </p>
           </div>
 
-          {/* CARD 3 */}
-          <div className="hover:scale-105 transition">
+          <div>
             <img
-              src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b"
+              src="https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?q=80&w=800&auto=format&fit=crop"
               className="rounded-xl mb-4 h-48 w-full object-cover"
             />
             <h3 className="text-xl font-semibold">Smart Matching</h3>
@@ -99,7 +169,7 @@ export default function Home() {
         </div>
 
         <img
-          src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3"
+          src="https://images.unsplash.com/photo-1538108149393-fbbd81895907?q=80&w=1000&auto=format&fit=crop"
           className="rounded-2xl w-full h-[300px] object-cover"
         />
 
@@ -150,12 +220,14 @@ export default function Home() {
           Join MedCareer and unlock better opportunities in healthcare.
         </p>
 
-        <a
-          href="/auth"
-          className="inline-block mt-8 px-8 py-3 bg-white text-black rounded-full hover:opacity-80"
-        >
-          Register / Login
-        </a>
+        {!user && (
+          <a
+            href="/auth"
+            className="inline-block mt-8 px-8 py-3 bg-white text-black rounded-full"
+          >
+            Register / Login
+          </a>
+        )}
 
       </section>
 
