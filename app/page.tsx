@@ -4,66 +4,59 @@ export default function Home() {
 
       {/* HEADER */}
       <header className="w-full flex justify-between items-center px-10 py-6 border-b">
-
-        <h1 className="text-xl font-semibold tracking-tight">
-          MedCareer
-        </h1>
+        <h1 className="text-xl font-semibold">MedCareer</h1>
 
         <div className="space-x-6 text-sm text-gray-600">
-          <a href="/jobs" className="hover:text-black transition">Explore Jobs</a>
-          <a href="/post-job" className="hover:text-black transition">Post Job</a>
-          <a href="/auth" className="hover:text-black transition">Login / Register</a>
+          <a href="/jobs" className="hover:text-black">Explore Jobs</a>
+          <a href="/post-job" className="hover:text-black">Post Job</a>
+          <a href="/auth" className="hover:text-black">Login / Register</a>
         </div>
-
       </header>
 
-      {/* HERO SECTION */}
-      <section className="flex flex-col items-center justify-center text-center px-6 py-24">
+      {/* HERO */}
+      <section className="text-center px-6 py-28">
 
-        <h2 className="text-5xl font-semibold max-w-3xl leading-tight">
-          Find the Right Medical Career.
+        <h2 className="text-6xl font-semibold leading-tight max-w-4xl mx-auto">
+          The Future of Medical Careers.
         </h2>
 
-        <p className="mt-6 text-lg text-gray-600 max-w-2xl">
-          MedCareer connects doctors, nurses, and healthcare professionals with hospitals and clinics across India.
+        <p className="mt-6 text-lg text-gray-500 max-w-2xl mx-auto">
+          A modern platform connecting healthcare professionals with the right opportunities — fast, simple, and efficient.
         </p>
 
-        <div className="mt-10 flex gap-6 flex-wrap justify-center">
-          <a href="/auth" className="px-6 py-3 bg-black text-white rounded-full text-sm">
+        <div className="mt-10 flex gap-6 justify-center flex-wrap">
+          <a href="/auth" className="px-8 py-3 bg-black text-white rounded-full">
             Get Started
           </a>
 
-          <a href="/jobs" className="px-6 py-3 border border-gray-300 rounded-full text-sm">
+          <a href="/jobs" className="px-8 py-3 border rounded-full">
             Explore Jobs
           </a>
         </div>
 
       </section>
 
-      {/* IMAGE / FEATURE SECTION */}
-      <section className="px-10 py-20 bg-gray-50">
+      {/* FULL WIDTH IMAGE (APPLE STYLE) */}
+      <section className="px-6">
+        <img
+          src="https://images.unsplash.com/photo-1580281657527-47c0b6b3a1f4"
+          className="w-full h-[400px] object-cover rounded-2xl"
+        />
+      </section>
 
-        <div className="grid md:grid-cols-3 gap-10 text-center">
+      {/* FEATURES */}
+      <section className="px-10 py-24">
 
-          <div>
-            <img
-              src="https://images.unsplash.com/photo-1580281657527-47c0b6b3a1f4"
-              className="rounded-xl mb-4 h-48 w-full object-cover"
-            />
-            <h3 className="text-lg font-semibold">For Doctors</h3>
-            <p className="text-gray-600 mt-2">
-              Discover jobs tailored to your profession like MBBS, BDS, BAMS and more.
-            </p>
-          </div>
+        <div className="grid md:grid-cols-3 gap-12 text-center">
 
           <div>
             <img
               src="https://images.unsplash.com/photo-1588776814546-ec7e3f1a8f17"
               className="rounded-xl mb-4 h-48 w-full object-cover"
             />
-            <h3 className="text-lg font-semibold">For Hospitals</h3>
-            <p className="text-gray-600 mt-2">
-              Post jobs and connect with qualified healthcare professionals easily.
+            <h3 className="text-xl font-semibold">Built for Doctors</h3>
+            <p className="text-gray-500 mt-2">
+              Find jobs that match your profession — MBBS, BDS, BAMS and more.
             </p>
           </div>
 
@@ -72,9 +65,20 @@ export default function Home() {
               src="https://images.unsplash.com/photo-1579154204601-01588f351e67"
               className="rounded-xl mb-4 h-48 w-full object-cover"
             />
-            <h3 className="text-lg font-semibold">Smart Matching</h3>
-            <p className="text-gray-600 mt-2">
-              Get relevant job recommendations based on your profession and skills.
+            <h3 className="text-xl font-semibold">For Hospitals</h3>
+            <p className="text-gray-500 mt-2">
+              Hire qualified professionals quickly and efficiently.
+            </p>
+          </div>
+
+          <div>
+            <img
+              src="https://images.unsplash.com/photo-1581594693702-fbdc51b2763b"
+              className="rounded-xl mb-4 h-48 w-full object-cover"
+            />
+            <h3 className="text-xl font-semibold">Smart Matching</h3>
+            <p className="text-gray-500 mt-2">
+              Jobs tailored based on your profession and preferences.
             </p>
           </div>
 
@@ -82,33 +86,53 @@ export default function Home() {
 
       </section>
 
-      {/* HOW IT WORKS */}
-      <section className="px-10 py-20 text-center">
+      {/* SPLIT SECTION (APPLE STYLE) */}
+      <section className="px-10 py-24 grid md:grid-cols-2 gap-16 items-center">
 
-        <h2 className="text-3xl font-semibold mb-10">
+        <div>
+          <h2 className="text-4xl font-semibold">
+            Designed for Simplicity
+          </h2>
+          <p className="text-gray-500 mt-4">
+            MedCareer removes complexity from job searching and hiring. 
+            Everything is designed to be fast, clean, and intuitive.
+          </p>
+        </div>
+
+        <img
+          src="https://images.unsplash.com/photo-1538108149393-fbbd81895907"
+          className="rounded-2xl w-full h-[300px] object-cover"
+        />
+
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section className="px-10 py-24 text-center bg-gray-50">
+
+        <h2 className="text-3xl font-semibold mb-12">
           How It Works
         </h2>
 
         <div className="grid md:grid-cols-3 gap-10">
 
           <div>
-            <h3 className="text-xl font-semibold">1. Register</h3>
-            <p className="text-gray-600 mt-2">
-              Create your account and choose your profession.
+            <h3 className="text-lg font-semibold">1. Create Account</h3>
+            <p className="text-gray-500 mt-2">
+              Sign up and select your profession.
             </p>
           </div>
 
           <div>
-            <h3 className="text-xl font-semibold">2. Explore / Post</h3>
-            <p className="text-gray-600 mt-2">
-              Doctors explore jobs. Hospitals post jobs.
+            <h3 className="text-lg font-semibold">2. Explore or Post</h3>
+            <p className="text-gray-500 mt-2">
+              Doctors explore jobs, hospitals post openings.
             </p>
           </div>
 
           <div>
-            <h3 className="text-xl font-semibold">3. Apply / Hire</h3>
-            <p className="text-gray-600 mt-2">
-              Apply to jobs or hire the best candidates.
+            <h3 className="text-lg font-semibold">3. Apply or Hire</h3>
+            <p className="text-gray-500 mt-2">
+              Apply instantly or hire the right candidate.
             </p>
           </div>
 
@@ -116,10 +140,10 @@ export default function Home() {
 
       </section>
 
-      {/* CALL TO ACTION */}
-      <section className="px-6 py-20 bg-black text-white text-center">
+      {/* CTA */}
+      <section className="px-6 py-28 bg-black text-white text-center">
 
-        <h2 className="text-3xl font-semibold">
+        <h2 className="text-4xl font-semibold">
           Start Your Journey Today
         </h2>
 
@@ -129,7 +153,7 @@ export default function Home() {
 
         <a
           href="/auth"
-          className="inline-block mt-6 px-6 py-3 bg-white text-black rounded-full"
+          className="inline-block mt-8 px-8 py-3 bg-white text-black rounded-full"
         >
           Register / Login
         </a>
