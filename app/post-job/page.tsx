@@ -17,22 +17,19 @@ export default function PostJobPage() {
 
     setMessage("");
 
-    // GET USER
     const { data, error: userError } = await supabase.auth.getUser();
     const user = data?.user;
 
-    if (userError || !user) {
-      setMessage("❌ Login required");
+    if(userError || !user){
+      setMessage("Login required");
       return;
     }
 
-    // VALIDATION
-    if (!title || !hospital || !location || !profession) {
-      setMessage("❌ Please fill all required fields");
+    if(!title || !hospital || !location || !profession){
+      setMessage("Please fill all required fields");
       return;
     }
 
-    // INSERT JOB
     const { error } = await supabase
       .from("jobs")
       .insert({
@@ -45,14 +42,12 @@ export default function PostJobPage() {
         admin_id: user.id
       });
 
-    if (error) {
-      console.log("Supabase Error:", error);
-      setMessage(`❌ ${error.message}`);
+    if(error){
+      setMessage(error.message);
       return;
     }
 
-    // SUCCESS
-    setMessage("✅ Job posted successfully");
+    setMessage("Job posted successfully");
 
     setTitle("");
     setHospital("");
@@ -64,11 +59,11 @@ export default function PostJobPage() {
 
   return (
 
-    <div className="min-h-screen bg-gray-50 text-black px-6 py-20">
+    <div className="min-h-screen bg-white text-black px-6 py-20">
 
-      <div className="max-w-xl mx-auto bg-white p-8 rounded-xl shadow">
+      <div className="max-w-xl mx-auto">
 
-        <h1 className="text-3xl font-semibold mb-8 text-center">
+        <h1 className="text-3xl font-semibold mb-8 text-black">
           Post a Job
         </h1>
 
@@ -104,7 +99,6 @@ export default function PostJobPage() {
           onChange={(e)=>setSalary(e.target.value)}
         />
 
-        {/* PROFESSION */}
         <select
           className="w-full border p-3 rounded mb-4 text-black"
           value={profession}
@@ -129,13 +123,13 @@ export default function PostJobPage() {
 
         <button
           onClick={postJob}
-          className="w-full bg-black text-white py-3 rounded hover:opacity-80"
+          className="w-full bg-black text-white py-3 rounded"
         >
           Post Job
         </button>
 
         {message && (
-          <p className="mt-4 text-center text-sm font-medium">
+          <p className="mt-4 text-center text-red-600">
             {message}
           </p>
         )}
@@ -143,6 +137,5 @@ export default function PostJobPage() {
       </div>
 
     </div>
-
   );
 }
