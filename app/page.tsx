@@ -1,14 +1,16 @@
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white text-neutral-900 flex flex-col">
+    <div className="min-h-screen bg-white text-black flex flex-col">
 
-      {/* Header */}
-      <header className="w-full flex justify-between items-center px-10 py-6">
+      {/* HEADER */}
+      <header className="w-full flex justify-between items-center px-10 py-6 border-b">
+
         <h1 className="text-xl font-semibold tracking-tight">
           MedCareer
         </h1>
 
-        <div className="space-x-6 text-sm text-neutral-600">
+        <div className="space-x-6 text-sm text-gray-600">
+
           <a href="/jobs" className="hover:text-black transition">
             Browse Jobs
           </a>
@@ -24,10 +26,11 @@ export default function Home() {
           <a href="/auth" className="hover:text-black transition">
             Login / Register
           </a>
+
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* HERO SECTION */}
       <main className="flex flex-1 flex-col items-center justify-center text-center px-6">
 
         <h2 className="text-5xl font-semibold tracking-tight max-w-3xl leading-tight">
@@ -36,12 +39,14 @@ export default function Home() {
           Reimagined.
         </h2>
 
-        {/* SHORT DESCRIPTION */}
-        <p className="mt-6 text-lg text-neutral-500 max-w-2xl">
-          A modern job platform connecting healthcare professionals with hospitals and clinics.
+        {/* SHORT CLEAN DESCRIPTION */}
+        <p className="mt-6 text-lg text-gray-600 max-w-2xl">
+          Connecting healthcare professionals with the right opportunities.
         </p>
 
-        <div className="mt-10 flex gap-6">
+        {/* BUTTONS */}
+        <div className="mt-10 flex gap-6 flex-wrap justify-center">
+
           <a
             href="/jobs"
             className="px-6 py-3 bg-black text-white rounded-full text-sm hover:opacity-80 transition"
@@ -51,23 +56,24 @@ export default function Home() {
 
           <a
             href="/applications"
-            className="px-6 py-3 border border-neutral-300 rounded-full text-sm hover:bg-neutral-100 transition"
+            className="px-6 py-3 border border-gray-300 rounded-full text-sm hover:bg-gray-100 transition"
           >
             My Applications
           </a>
 
           <a
             href="/post-job"
-            className="px-6 py-3 border border-neutral-300 rounded-full text-sm hover:bg-neutral-100 transition"
+            className="px-6 py-3 border border-gray-300 rounded-full text-sm hover:bg-gray-100 transition"
           >
             Post Job
           </a>
+
         </div>
 
       </main>
 
-      {/* Footer */}
-      <footer className="text-center text-sm text-neutral-400 py-6">
+      {/* FOOTER */}
+      <footer className="text-center text-sm text-gray-500 py-6 border-t">
         © {new Date().getFullYear()} MedCareer. All rights reserved.
       </footer>
 
