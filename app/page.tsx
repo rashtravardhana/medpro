@@ -5,16 +5,28 @@ import supabase from "@/lib/supabase";
 
 export default function Home() {
 
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   // CHECK LOGIN
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
       setUser(data?.user || null);
+      setLoading(false);
     };
+
     getUser();
   }, []);
+
+  // ✅ LOADER (NO GAP ISSUE)
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-white">
+        <p className="text-gray-500 text-lg">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">
@@ -22,13 +34,11 @@ export default function Home() {
       {/* HEADER */}
       <header className="w-full flex justify-between items-center px-10 py-6 border-b">
 
-        <h1 className="text-xl font-semibold">
-          MedCareer
-        </h1>
+        <h1 className="text-xl font-semibold">MedCareer</h1>
 
         <div className="space-x-6 text-sm text-gray-600">
 
-          {/* 👇 SHOW ONLY AFTER LOGIN */}
+          {/* ✅ ONLY AFTER LOGIN */}
           {user && (
             <>
               <a href="/jobs" className="hover:text-black">
@@ -38,10 +48,20 @@ export default function Home() {
               <a href="/post-job" className="hover:text-black">
                 Post Job
               </a>
+
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.reload();
+                }}
+                className="text-red-500"
+              >
+                Logout
+              </button>
             </>
           )}
 
-          {/* 👇 SHOW ONLY BEFORE LOGIN */}
+          {/* ✅ ONLY BEFORE LOGIN */}
           {!user && (
             <a href="/auth" className="hover:text-black">
               Login / Register
@@ -55,7 +75,7 @@ export default function Home() {
       {/* HERO */}
       <section className="text-center px-6 py-28">
 
-        <h2 className="text-6xl font-semibold leading-tight max-w-4xl mx-auto">
+        <h2 className="text-6xl font-semibold max-w-4xl mx-auto">
           The Future of Medical Careers.
         </h2>
 
@@ -65,7 +85,7 @@ export default function Home() {
 
         <div className="mt-10 flex gap-6 justify-center flex-wrap">
 
-          {/* BEFORE LOGIN */}
+          {/* ✅ BEFORE LOGIN */}
           {!user && (
             <>
               <a
@@ -84,7 +104,7 @@ export default function Home() {
             </>
           )}
 
-          {/* AFTER LOGIN */}
+          {/* ✅ AFTER LOGIN */}
           {user && (
             <>
               <a
@@ -112,6 +132,7 @@ export default function Home() {
         <img
           src="https://images.unsplash.com/photo-1580281657527-47c0b6b3a1f4?q=80&w=1200&auto=format&fit=crop"
           className="w-full h-[400px] object-cover rounded-2xl"
+          alt="Medical career"
         />
       </section>
 
@@ -123,6 +144,7 @@ export default function Home() {
             <img
               src="https://images.unsplash.com/photo-1588776814546-ec7e3f1a8f17?q=80&w=800&auto=format&fit=crop"
               className="rounded-xl mb-4 h-48 w-full object-cover"
+              alt=""
             />
             <h3 className="text-xl font-semibold">Built for Doctors</h3>
             <p className="text-gray-500 mt-2">
@@ -134,6 +156,7 @@ export default function Home() {
             <img
               src="https://images.unsplash.com/photo-1579154204601-01588f351e67?q=80&w=800&auto=format&fit=crop"
               className="rounded-xl mb-4 h-48 w-full object-cover"
+              alt=""
             />
             <h3 className="text-xl font-semibold">For Hospitals</h3>
             <p className="text-gray-500 mt-2">
@@ -145,6 +168,7 @@ export default function Home() {
             <img
               src="https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?q=80&w=800&auto=format&fit=crop"
               className="rounded-xl mb-4 h-48 w-full object-cover"
+              alt=""
             />
             <h3 className="text-xl font-semibold">Smart Matching</h3>
             <p className="text-gray-500 mt-2">
@@ -153,60 +177,6 @@ export default function Home() {
           </div>
 
         </div>
-      </section>
-
-      {/* SPLIT SECTION */}
-      <section className="px-10 py-24 grid md:grid-cols-2 gap-16 items-center">
-
-        <div>
-          <h2 className="text-4xl font-semibold">
-            Designed for Simplicity
-          </h2>
-          <p className="text-gray-500 mt-4">
-            MedCareer removes complexity from job searching and hiring.
-            Everything is designed to be fast, clean, and intuitive.
-          </p>
-        </div>
-
-        <img
-          src="https://images.unsplash.com/photo-1538108149393-fbbd81895907?q=80&w=1000&auto=format&fit=crop"
-          className="rounded-2xl w-full h-[300px] object-cover"
-        />
-
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section className="px-10 py-24 text-center bg-gray-50">
-
-        <h2 className="text-3xl font-semibold mb-12">
-          How It Works
-        </h2>
-
-        <div className="grid md:grid-cols-3 gap-10">
-
-          <div>
-            <h3 className="text-lg font-semibold">1. Create Account</h3>
-            <p className="text-gray-500 mt-2">
-              Sign up and select your profession.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-semibold">2. Explore or Post</h3>
-            <p className="text-gray-500 mt-2">
-              Doctors explore jobs, hospitals post openings.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-semibold">3. Apply or Hire</h3>
-            <p className="text-gray-500 mt-2">
-              Apply instantly or hire the right candidate.
-            </p>
-          </div>
-
-        </div>
-
       </section>
 
       {/* CTA */}
