@@ -1,23 +1,21 @@
 @import "tailwindcss";
 
+/* LIGHT MODE DEFAULT */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111827; /* dark text */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* REMOVE DARK MODE AUTO SWITCH (THIS WAS CAUSING ISSUE) */
+/* Commented out to avoid white-on-white problems */
+/*
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
 }
+*/
 
 body {
   background: var(--background);
