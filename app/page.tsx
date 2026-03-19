@@ -15,7 +15,6 @@ export default function Home() {
 
       {/* HERO */}
       <section className="text-center px-6 py-28">
-
         <h2 className="text-6xl font-semibold leading-tight max-w-4xl mx-auto">
           The Future of Medical Careers.
         </h2>
@@ -33,25 +32,24 @@ export default function Home() {
             Explore Jobs
           </a>
         </div>
-
       </section>
 
-      {/* FULL WIDTH IMAGE (APPLE STYLE) */}
+      {/* HERO IMAGE */}
       <section className="px-6">
         <img
-          src="https://images.unsplash.com/photo-1580281657527-47c0b6b3a1f4"
+          src="https://images.unsplash.com/photo-1580281657527-47c0b6b3a1f4?q=80&w=1200&auto=format&fit=crop"
           className="w-full h-[400px] object-cover rounded-2xl"
         />
       </section>
 
       {/* FEATURES */}
       <section className="px-10 py-24">
-
         <div className="grid md:grid-cols-3 gap-12 text-center">
 
+          {/* CARD 1 */}
           <div>
             <img
-              src="https://images.unsplash.com/photo-1588776814546-ec7e3f1a8f17"
+              src="https://images.unsplash.com/photo-1588776814546-ec7e3f1a8f17?q=80&w=800&auto=format&fit=crop"
               className="rounded-xl mb-4 h-48 w-full object-cover"
             />
             <h3 className="text-xl font-semibold">Built for Doctors</h3>
@@ -60,9 +58,10 @@ export default function Home() {
             </p>
           </div>
 
+          {/* CARD 2 */}
           <div>
             <img
-              src="https://images.unsplash.com/photo-1579154204601-01588f351e67"
+              src="https://images.unsplash.com/photo-1579154204601-01588f351e67?q=80&w=800&auto=format&fit=crop"
               className="rounded-xl mb-4 h-48 w-full object-cover"
             />
             <h3 className="text-xl font-semibold">For Hospitals</h3>
@@ -71,9 +70,10 @@ export default function Home() {
             </p>
           </div>
 
+          {/* CARD 3 */}
           <div>
             <img
-              src="https://images.unsplash.com/photo-1581594693702-fbdc51b2763b"
+              src="https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?q=80&w=800&auto=format&fit=crop"
               className="rounded-xl mb-4 h-48 w-full object-cover"
             />
             <h3 className="text-xl font-semibold">Smart Matching</h3>
@@ -83,10 +83,9 @@ export default function Home() {
           </div>
 
         </div>
-
       </section>
 
-      {/* SPLIT SECTION (APPLE STYLE) */}
+      {/* SPLIT SECTION */}
       <section className="px-10 py-24 grid md:grid-cols-2 gap-16 items-center">
 
         <div>
@@ -94,13 +93,13 @@ export default function Home() {
             Designed for Simplicity
           </h2>
           <p className="text-gray-500 mt-4">
-            MedCareer removes complexity from job searching and hiring. 
+            MedCareer removes complexity from job searching and hiring.
             Everything is designed to be fast, clean, and intuitive.
           </p>
         </div>
 
         <img
-          src="https://images.unsplash.com/photo-1538108149393-fbbd81895907"
+          src="https://images.unsplash.com/photo-1538108149393-fbbd81895907?q=80&w=1000&auto=format&fit=crop"
           className="rounded-2xl w-full h-[300px] object-cover"
         />
 
