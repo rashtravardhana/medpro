@@ -24,11 +24,11 @@ export default function Home() {
         </p>
 
         <div className="mt-10 flex gap-6 justify-center flex-wrap">
-          <a href="/auth" className="px-8 py-3 bg-black text-white rounded-full">
+          <a href="/auth" className="px-8 py-3 bg-black text-white rounded-full hover:opacity-80">
             Get Started
           </a>
 
-          <a href="/jobs" className="px-8 py-3 border rounded-full">
+          <a href="/jobs" className="px-8 py-3 border rounded-full hover:bg-gray-100">
             Explore Jobs
           </a>
         </div>
@@ -37,7 +37,7 @@ export default function Home() {
       {/* HERO IMAGE */}
       <section className="px-6">
         <img
-          src="https://images.unsplash.com/photo-1580281657527-47c0b6b3a1f4?q=80&w=1200&auto=format&fit=crop"
+          src="https://images.unsplash.com/photo-1576091160550-2173dba999ef"
           className="w-full h-[400px] object-cover rounded-2xl"
         />
       </section>
@@ -47,9 +47,9 @@ export default function Home() {
         <div className="grid md:grid-cols-3 gap-12 text-center">
 
           {/* CARD 1 */}
-          <div>
+          <div className="hover:scale-105 transition">
             <img
-              src="https://images.unsplash.com/photo-1588776814546-ec7e3f1a8f17?q=80&w=800&auto=format&fit=crop"
+              src="https://images.unsplash.com/photo-1600959907703-125ba1374a12"
               className="rounded-xl mb-4 h-48 w-full object-cover"
             />
             <h3 className="text-xl font-semibold">Built for Doctors</h3>
@@ -59,9 +59,9 @@ export default function Home() {
           </div>
 
           {/* CARD 2 */}
-          <div>
+          <div className="hover:scale-105 transition">
             <img
-              src="https://images.unsplash.com/photo-1579154204601-01588f351e67?q=80&w=800&auto=format&fit=crop"
+              src="https://images.unsplash.com/photo-1584982751601-97dcc096659c"
               className="rounded-xl mb-4 h-48 w-full object-cover"
             />
             <h3 className="text-xl font-semibold">For Hospitals</h3>
@@ -71,9 +71,9 @@ export default function Home() {
           </div>
 
           {/* CARD 3 */}
-          <div>
+          <div className="hover:scale-105 transition">
             <img
-              src="https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?q=80&w=800&auto=format&fit=crop"
+              src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b"
               className="rounded-xl mb-4 h-48 w-full object-cover"
             />
             <h3 className="text-xl font-semibold">Smart Matching</h3>
@@ -99,7 +99,7 @@ export default function Home() {
         </div>
 
         <img
-          src="https://images.unsplash.com/photo-1538108149393-fbbd81895907?q=80&w=1000&auto=format&fit=crop"
+          src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3"
           className="rounded-2xl w-full h-[300px] object-cover"
         />
 
@@ -152,7 +152,7 @@ export default function Home() {
 
         <a
           href="/auth"
-          className="inline-block mt-8 px-8 py-3 bg-white text-black rounded-full"
+          className="inline-block mt-8 px-8 py-3 bg-white text-black rounded-full hover:opacity-80"
         >
           Register / Login
         </a>
