@@ -20,7 +20,7 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
 
         {/* LOGO */}
-        <a href="/" className="text-lg font-semibold">
+        <a href="/" className="text-lg font-semibold tracking-tight">
           MedCareer
         </a>
 
@@ -29,9 +29,20 @@ export default function Navbar() {
 
           {user ? (
             <>
-              <a href="/jobs">Jobs</a>
-              <a href="/post-job">Post Job</a>
-              <a href="/applications">Applications</a>
+              <a href="/jobs" className="hover:text-black">Jobs</a>
+
+              <a href="/applications" className="hover:text-black">
+                Applications
+              </a>
+
+              <a href="/dashboard" className="hover:text-black">
+                Dashboard
+              </a>
+
+              {/* ✅ ADMIN */}
+              <a href="/admin/dashboard" className="hover:text-black">
+                Admin
+              </a>
 
               <button
                 onClick={async () => {
