@@ -19,7 +19,7 @@ export default function Home() {
     getUser();
   }, []);
 
-  // ⏳ LOADER (FIX GAP ISSUE)
+  // ⏳ LOADER
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
@@ -88,7 +88,6 @@ export default function Home() {
 
         <div className="mt-10 flex gap-6 justify-center flex-wrap">
 
-          {/* BEFORE LOGIN */}
           {!user ? (
             <>
               <a
@@ -138,12 +137,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ✨ FEATURES */}
+      {/* ✨ FEATURES (CLICKABLE NOW) */}
       <section className="px-10 py-28">
         <div className="grid md:grid-cols-3 gap-12 text-center">
 
-          {/* CARD 1 */}
-          <div className="group">
+          {/* DOCTORS */}
+          <a href="/doctors" className="group block cursor-pointer">
             <div className="overflow-hidden rounded-xl shadow-sm">
               <img
                 src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=800&auto=format&fit=crop"
@@ -157,10 +156,10 @@ export default function Home() {
             <p className="text-gray-500 mt-2">
               Find jobs tailored to MBBS, BDS, BAMS and more.
             </p>
-          </div>
+          </a>
 
-          {/* CARD 2 */}
-          <div className="group">
+          {/* HOSPITALS */}
+          <a href="/hospitals" className="group block cursor-pointer">
             <div className="overflow-hidden rounded-xl shadow-sm">
               <img
                 src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3?q=80&w=800&auto=format&fit=crop"
@@ -174,15 +173,15 @@ export default function Home() {
             <p className="text-gray-500 mt-2">
               Hire qualified professionals quickly and efficiently.
             </p>
-          </div>
+          </a>
 
-          {/* CARD 3 */}
-          <div className="group">
+          {/* MATCHING */}
+          <a href="/matching" className="group block cursor-pointer">
             <div className="overflow-hidden rounded-xl shadow-sm">
               <img
                 src="https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?q=80&w=800&auto=format&fit=crop"
                 className="h-48 w-full object-cover group-hover:scale-105 transition duration-500"
-                alt="Lab"
+                alt="Matching"
               />
             </div>
             <h3 className="text-xl font-semibold mt-4">
@@ -191,7 +190,7 @@ export default function Home() {
             <p className="text-gray-500 mt-2">
               Jobs tailored based on your profession and preferences.
             </p>
-          </div>
+          </a>
 
         </div>
       </section>
