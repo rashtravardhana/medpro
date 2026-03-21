@@ -16,16 +16,16 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 border-b">
+    <header className="sticky top-0 z-50 glass soft-shadow">
       <div className="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
 
         {/* LOGO */}
-        <h1 className="text-lg font-semibold">
+        <a href="/" className="text-lg font-semibold">
           MedCareer
-        </h1>
+        </a>
 
-        {/* NAV LINKS */}
-        <div className="flex gap-6 text-sm text-gray-600">
+        {/* NAV */}
+        <div className="flex gap-6 text-sm text-gray-600 items-center">
 
           {user ? (
             <>
@@ -44,7 +44,9 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            <a href="/auth">Login</a>
+            <a href="/auth" className="btn-primary">
+              Login
+            </a>
           )}
 
         </div>
