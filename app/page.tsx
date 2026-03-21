@@ -8,6 +8,7 @@ export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔐 CHECK LOGIN
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
@@ -18,11 +19,13 @@ export default function Home() {
     getUser();
   }, []);
 
-  // LOADER
+  // ⏳ LOADER (FIX GAP ISSUE)
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
-        <p className="text-gray-500 text-lg">Loading...</p>
+        <p className="text-gray-500 text-lg animate-pulse">
+          Loading MedCareer...
+        </p>
       </div>
     );
   }
@@ -30,118 +33,161 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">
 
-      {/* HEADER */}
-      <header className="w-full flex justify-between items-center px-10 py-6 border-b">
-        <h1 className="text-xl font-semibold">MedCareer</h1>
+      {/* 🔥 NAVBAR */}
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-white/70 border-b">
+        <div className="flex justify-between items-center px-10 py-5">
 
-        <div className="space-x-6 text-sm text-gray-600">
+          <h1 className="text-xl font-semibold tracking-tight">
+            MedCareer
+          </h1>
 
-          {user ? (
-            <>
-              <a href="/jobs" className="hover:text-black">Explore Jobs</a>
-              <a href="/post-job" className="hover:text-black">Post Job</a>
+          <div className="space-x-6 text-sm text-gray-600">
 
-              <button
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  window.location.reload();
-                }}
-                className="text-red-500"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <a href="/auth" className="hover:text-black">
-              Login / Register
-            </a>
-          )}
+            {user ? (
+              <>
+                <a href="/jobs" className="hover:text-black transition">
+                  Explore Jobs
+                </a>
 
+                <a href="/post-job" className="hover:text-black transition">
+                  Post Job
+                </a>
+
+                <button
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    window.location.reload();
+                  }}
+                  className="text-red-500 hover:opacity-70 transition"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <a href="/auth" className="hover:text-black transition">
+                Login / Register
+              </a>
+            )}
+
+          </div>
         </div>
       </header>
 
-      {/* HERO */}
+      {/* 🚀 HERO */}
       <section className="text-center px-6 py-28">
-        <h2 className="text-5xl md:text-6xl font-semibold max-w-4xl mx-auto leading-tight">
-          The Future of Medical Careers.
+
+        <h2 className="text-5xl md:text-7xl font-semibold tracking-tight leading-tight max-w-4xl mx-auto">
+          The Future of
+          <br />
+          Medical Careers.
         </h2>
 
         <p className="mt-6 text-lg text-gray-500 max-w-2xl mx-auto">
-          A modern platform connecting healthcare professionals with the right opportunities.
+          A modern platform connecting healthcare professionals with the right opportunities — fast, simple, and efficient.
         </p>
 
         <div className="mt-10 flex gap-6 justify-center flex-wrap">
+
+          {/* BEFORE LOGIN */}
           {!user ? (
             <>
-              <a href="/auth" className="px-8 py-3 bg-black text-white rounded-full hover:opacity-80 transition">
+              <a
+                href="/auth"
+                className="px-8 py-3 bg-black text-white rounded-full hover:scale-105 transition"
+              >
                 Get Started
               </a>
 
-              <a href="/auth" className="px-8 py-3 border rounded-full hover:bg-gray-100 transition">
+              <a
+                href="/auth"
+                className="px-8 py-3 border rounded-full hover:bg-gray-100 transition"
+              >
                 Login
               </a>
             </>
           ) : (
             <>
-              <a href="/jobs" className="px-8 py-3 bg-black text-white rounded-full">
+              <a
+                href="/jobs"
+                className="px-8 py-3 bg-black text-white rounded-full hover:scale-105 transition"
+              >
                 Explore Jobs
               </a>
 
-              <a href="/post-job" className="px-8 py-3 border rounded-full">
+              <a
+                href="/post-job"
+                className="px-8 py-3 border rounded-full hover:bg-gray-100 transition"
+              >
                 Post Job
               </a>
             </>
           )}
+
+        </div>
+
+      </section>
+
+      {/* 🖼 HERO IMAGE */}
+      <section className="px-6">
+        <div className="overflow-hidden rounded-2xl shadow-lg">
+          <img
+            src="https://images.unsplash.com/photo-1550831107-1553da8c8464?q=80&w=1600&auto=format&fit=crop"
+            alt="Doctor consulting patient"
+            className="w-full h-[420px] object-cover hover:scale-105 transition duration-700"
+          />
         </div>
       </section>
 
-      {/* HERO IMAGE (FIXED + PROFESSIONAL) */}
-      <section className="px-6">
-        <img
-          src="https://images.unsplash.com/photo-1550831107-1553da8c8464?q=80&w=1600&auto=format&fit=crop"
-          className="w-full h-[400px] object-cover rounded-2xl shadow-md"
-          alt="Doctor consulting patient"
-        />
-      </section>
-
-      {/* FEATURES */}
-      <section className="px-10 py-24">
+      {/* ✨ FEATURES */}
+      <section className="px-10 py-28">
         <div className="grid md:grid-cols-3 gap-12 text-center">
 
           {/* CARD 1 */}
-          <div>
-            <img
-              src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=800&auto=format&fit=crop"
-              className="rounded-xl mb-4 h-48 w-full object-cover shadow-sm"
-              alt="Doctors team"
-            />
-            <h3 className="text-xl font-semibold">Built for Doctors</h3>
+          <div className="group">
+            <div className="overflow-hidden rounded-xl shadow-sm">
+              <img
+                src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=800&auto=format&fit=crop"
+                className="h-48 w-full object-cover group-hover:scale-105 transition duration-500"
+                alt="Doctors"
+              />
+            </div>
+            <h3 className="text-xl font-semibold mt-4">
+              Built for Doctors
+            </h3>
             <p className="text-gray-500 mt-2">
-              Find jobs that match your profession — MBBS, BDS, BAMS and more.
+              Find jobs tailored to MBBS, BDS, BAMS and more.
             </p>
           </div>
 
           {/* CARD 2 */}
-          <div>
-            <img
-              src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3?q=80&w=800&auto=format&fit=crop"
-              className="rounded-xl mb-4 h-48 w-full object-cover shadow-sm"
-              alt="Hospital building"
-            />
-            <h3 className="text-xl font-semibold">For Hospitals</h3>
+          <div className="group">
+            <div className="overflow-hidden rounded-xl shadow-sm">
+              <img
+                src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3?q=80&w=800&auto=format&fit=crop"
+                className="h-48 w-full object-cover group-hover:scale-105 transition duration-500"
+                alt="Hospital"
+              />
+            </div>
+            <h3 className="text-xl font-semibold mt-4">
+              For Hospitals
+            </h3>
             <p className="text-gray-500 mt-2">
               Hire qualified professionals quickly and efficiently.
             </p>
           </div>
 
           {/* CARD 3 */}
-          <div>
-            <img
-              src="https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?q=80&w=800&auto=format&fit=crop"
-              className="rounded-xl mb-4 h-48 w-full object-cover shadow-sm"
-              alt="Lab testing"
-            />
-            <h3 className="text-xl font-semibold">Smart Matching</h3>
+          <div className="group">
+            <div className="overflow-hidden rounded-xl shadow-sm">
+              <img
+                src="https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?q=80&w=800&auto=format&fit=crop"
+                className="h-48 w-full object-cover group-hover:scale-105 transition duration-500"
+                alt="Lab"
+              />
+            </div>
+            <h3 className="text-xl font-semibold mt-4">
+              Smart Matching
+            </h3>
             <p className="text-gray-500 mt-2">
               Jobs tailored based on your profession and preferences.
             </p>
@@ -150,9 +196,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ⚡ CTA */}
       <section className="px-6 py-28 bg-black text-white text-center">
-        <h2 className="text-4xl font-semibold">
+
+        <h2 className="text-4xl md:text-5xl font-semibold">
           Start Your Journey Today
         </h2>
 
@@ -163,11 +210,12 @@ export default function Home() {
         {!user && (
           <a
             href="/auth"
-            className="inline-block mt-8 px-8 py-3 bg-white text-black rounded-full hover:opacity-90 transition"
+            className="inline-block mt-8 px-8 py-3 bg-white text-black rounded-full hover:scale-105 transition"
           >
             Register / Login
           </a>
         )}
+
       </section>
 
       {/* FOOTER */}
