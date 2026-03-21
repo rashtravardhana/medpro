@@ -6,13 +6,34 @@ import supabase from "@/lib/supabase";
 export default function Navbar() {
 
   const [user, setUser] = useState<any>(null);
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const getUser = async () => {
+    const getUserAndRole = async () => {
+
       const { data } = await supabase.auth.getUser();
-      setUser(data?.user || null);
+      const currentUser = data?.user;
+
+      if (!currentUser) {
+        setUser(null);
+        return;
+      }
+
+      setUser(currentUser);
+
+      // ✅ FETCH ROLE FROM PROFILES TABLE
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", currentUser.id)
+        .single();
+
+      if (profile) {
+        setRole(profile.role);
+      }
     };
-    getUser();
+
+    getUserAndRole();
   }, []);
 
   return (
@@ -27,43 +48,54 @@ export default function Navbar() {
         {/* NAV */}
         <div className="flex gap-6 text-sm text-gray-600 items-center">
 
-          {user ? (
-  <>
-    <a href="/jobs" className="hover:text-black">Jobs</a>
+          {!user && (
+            <a href="/auth" className="btn-primary">
+              Login
+            </a>
+          )}
 
-    {/* 👨‍⚕️ DOCTOR */}
-    <a href="/dashboard" className="hover:text-black">
-      Dashboard
-    </a>
+          {user && (
+            <>
+              <a href="/jobs" className="hover:text-black">Jobs</a>
 
-    <a href="/applications" className="hover:text-black">
-      Applications
-    </a>
+              {/* 👨‍⚕️ DOCTOR ONLY */}
+              {role === "doctor" && (
+                <>
+                  <a href="/dashboard" className="hover:text-black">
+                    Dashboard
+                  </a>
 
-    {/* 🏥 ADMIN */}
-    <a href="/admin/dashboard" className="hover:text-black">
-      Admin
-    </a>
+                  <a href="/applications" className="hover:text-black">
+                    Applications
+                  </a>
+                </>
+              )}
 
-    <a href="/post-job" className="hover:text-black">
-      Post Job
-    </a>
+              {/* 🏥 ADMIN ONLY */}
+              {role === "admin" && (
+                <>
+                  <a href="/admin/dashboard" className="hover:text-black">
+                    Admin
+                  </a>
 
-    <button
-      onClick={async () => {
-        await supabase.auth.signOut();
-        window.location.reload();
-      }}
-      className="text-red-500"
-    >
-      Logout
-    </button>
-  </>
-) : (
-  <a href="/auth" className="hover:text-black">
-    Login
-  </a>
-)}
+                  <a href="/post-job" className="hover:text-black">
+                    Post Job
+                  </a>
+                </>
+              )}
+
+              {/* LOGOUT */}
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.reload();
+                }}
+                className="text-red-500"
+              >
+                Logout
+              </button>
+            </>
+          )}
 
         </div>
 
