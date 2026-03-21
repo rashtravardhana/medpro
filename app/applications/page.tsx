@@ -7,60 +7,73 @@ export default function ApplicationsPage() {
 
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
 
-    const fetchApplications = async () => {
+    const checkUserAndFetch = async () => {
 
-      const { data, error } = await supabase
+      // 🔐 CHECK LOGIN
+      const { data } = await supabase.auth.getUser();
+      const currentUser = data?.user;
+
+      if (!currentUser) {
+        // ❌ NOT LOGGED IN → REDIRECT
+        window.location.href = "/auth";
+        return;
+      }
+
+      setUser(currentUser);
+
+      // ✅ FETCH ONLY USER APPLICATIONS
+      const { data: apps, error } = await supabase
         .from("applications")
-        .select("*");
+        .select("*")
+        .eq("user_id", currentUser.id); // IMPORTANT
 
       if (error) {
         console.log(error);
       }
 
-      setApplications(data || []);
+      setApplications(apps || []);
       setLoading(false);
     };
 
-    fetchApplications();
+    checkUserAndFetch();
 
   }, []);
 
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading applications...
+      <div className="h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading applications...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center">
+    <div className="min-h-screen px-6 py-20">
 
-      <h1 className="text-3xl font-semibold mb-8">
-        My Applications
-      </h1>
+      <div className="max-w-2xl mx-auto">
 
-      {applications.length === 0 ? (
+        <h1 className="text-3xl font-semibold mb-8 text-center">
+          My Applications
+        </h1>
 
-        <p>No applications yet.</p>
+        {applications.length === 0 ? (
+          <p className="text-center text-gray-500">
+            No applications yet.
+          </p>
+        ) : (
+          applications.map((app) => (
+            <div key={app.id} className="border p-4 rounded-lg mb-4">
+              <p><strong>Job ID:</strong> {app.job_id}</p>
+              <p><strong>Status:</strong> {app.status}</p>
+            </div>
+          ))
+        )}
 
-      ) : (
-
-        applications.map((app) => (
-
-          <div key={app.id} className="border p-4 rounded-lg mb-4">
-            Job ID: {app.job_id}
-            <br />
-            Status: {app.status}
-          </div>
-
-        ))
-
-      )}
+      </div>
 
     </div>
   );
