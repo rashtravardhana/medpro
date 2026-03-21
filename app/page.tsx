@@ -62,7 +62,7 @@ export default function Home() {
 
       {/* HERO */}
       <section className="text-center px-6 py-28">
-        <h2 className="text-6xl font-semibold max-w-4xl mx-auto">
+        <h2 className="text-5xl md:text-6xl font-semibold max-w-4xl mx-auto leading-tight">
           The Future of Medical Careers.
         </h2>
 
@@ -73,11 +73,11 @@ export default function Home() {
         <div className="mt-10 flex gap-6 justify-center flex-wrap">
           {!user ? (
             <>
-              <a href="/auth" className="px-8 py-3 bg-black text-white rounded-full">
+              <a href="/auth" className="px-8 py-3 bg-black text-white rounded-full hover:opacity-80 transition">
                 Get Started
               </a>
 
-              <a href="/auth" className="px-8 py-3 border rounded-full">
+              <a href="/auth" className="px-8 py-3 border rounded-full hover:bg-gray-100 transition">
                 Login
               </a>
             </>
@@ -95,12 +95,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* HERO IMAGE (FIXED) */}
+      {/* HERO IMAGE (FIXED + PROFESSIONAL) */}
       <section className="px-6">
         <img
-          src="https://images.unsplash.com/photo-1584515933487-779824d29309"
-          className="w-full h-[400px] object-cover rounded-2xl"
-          alt="Doctor using laptop"
+          src="https://images.unsplash.com/photo-1550831107-1553da8c8464?q=80&w=1600&auto=format&fit=crop"
+          className="w-full h-[400px] object-cover rounded-2xl shadow-md"
+          alt="Doctor consulting patient"
         />
       </section>
 
@@ -108,12 +108,12 @@ export default function Home() {
       <section className="px-10 py-24">
         <div className="grid md:grid-cols-3 gap-12 text-center">
 
-          {/* ✅ FIXED IMAGE 1 */}
+          {/* CARD 1 */}
           <div>
             <img
-              src="https://images.unsplash.com/photo-1579684385127-1ef15d508118"
-              className="rounded-xl mb-4 h-48 w-full object-cover"
-              alt="Doctor"
+              src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=800&auto=format&fit=crop"
+              className="rounded-xl mb-4 h-48 w-full object-cover shadow-sm"
+              alt="Doctors team"
             />
             <h3 className="text-xl font-semibold">Built for Doctors</h3>
             <p className="text-gray-500 mt-2">
@@ -121,12 +121,12 @@ export default function Home() {
             </p>
           </div>
 
-          {/* ✅ FIXED IMAGE 2 */}
+          {/* CARD 2 */}
           <div>
             <img
-              src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3"
-              className="rounded-xl mb-4 h-48 w-full object-cover"
-              alt="Hospital"
+              src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3?q=80&w=800&auto=format&fit=crop"
+              className="rounded-xl mb-4 h-48 w-full object-cover shadow-sm"
+              alt="Hospital building"
             />
             <h3 className="text-xl font-semibold">For Hospitals</h3>
             <p className="text-gray-500 mt-2">
@@ -134,12 +134,12 @@ export default function Home() {
             </p>
           </div>
 
-          {/* ✅ WORKING IMAGE */}
+          {/* CARD 3 */}
           <div>
             <img
-              src="https://images.unsplash.com/photo-1581594693702-fbdc51b2763b"
-              className="rounded-xl mb-4 h-48 w-full object-cover"
-              alt="Lab"
+              src="https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?q=80&w=800&auto=format&fit=crop"
+              className="rounded-xl mb-4 h-48 w-full object-cover shadow-sm"
+              alt="Lab testing"
             />
             <h3 className="text-xl font-semibold">Smart Matching</h3>
             <p className="text-gray-500 mt-2">
@@ -163,7 +163,7 @@ export default function Home() {
         {!user && (
           <a
             href="/auth"
-            className="inline-block mt-8 px-8 py-3 bg-white text-black rounded-full"
+            className="inline-block mt-8 px-8 py-3 bg-white text-black rounded-full hover:opacity-90 transition"
           >
             Register / Login
           </a>
