@@ -28,37 +28,42 @@ export default function Navbar() {
         <div className="flex gap-6 text-sm text-gray-600 items-center">
 
           {user ? (
-            <>
-              <a href="/jobs" className="hover:text-black">Jobs</a>
+  <>
+    <a href="/jobs" className="hover:text-black">Jobs</a>
 
-              <a href="/applications" className="hover:text-black">
-                Applications
-              </a>
+    {/* 👨‍⚕️ DOCTOR */}
+    <a href="/dashboard" className="hover:text-black">
+      Dashboard
+    </a>
 
-              <a href="/dashboard" className="hover:text-black">
-                Dashboard
-              </a>
+    <a href="/applications" className="hover:text-black">
+      Applications
+    </a>
 
-              {/* ✅ ADMIN */}
-              <a href="/admin/dashboard" className="hover:text-black">
-                Admin
-              </a>
+    {/* 🏥 ADMIN */}
+    <a href="/admin/dashboard" className="hover:text-black">
+      Admin
+    </a>
 
-              <button
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  window.location.reload();
-                }}
-                className="text-red-500"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <a href="/auth" className="btn-primary">
-              Login
-            </a>
-          )}
+    <a href="/post-job" className="hover:text-black">
+      Post Job
+    </a>
+
+    <button
+      onClick={async () => {
+        await supabase.auth.signOut();
+        window.location.reload();
+      }}
+      className="text-red-500"
+    >
+      Logout
+    </button>
+  </>
+) : (
+  <a href="/auth" className="hover:text-black">
+    Login
+  </a>
+)}
 
         </div>
 
