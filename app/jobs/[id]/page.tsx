@@ -12,6 +12,7 @@ export default function JobDetail() {
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [applying, setApplying] = useState(false);
 
   // 🔹 FETCH JOB
   useEffect(() => {
@@ -44,6 +45,9 @@ export default function JobDetail() {
       return;
     }
 
+    setApplying(true);
+    setMessage("");
+
     // check existing
     const { data: existing } = await supabase
       .from("applications")
@@ -54,6 +58,7 @@ export default function JobDetail() {
 
     if (existing) {
       setMessage("You already applied.");
+      setApplying(false);
       return;
     }
 
@@ -72,15 +77,24 @@ export default function JobDetail() {
       setMessage("Application submitted successfully.");
     }
 
+    setApplying(false);
   };
 
   // ⏳ LOADING
   if (loading) {
-    return <p className="p-10">Loading...</p>;
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading job...</p>
+      </div>
+    );
   }
 
   if (!job) {
-    return <p className="p-10">Job not found</p>;
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p className="text-gray-500">Job not found</p>
+      </div>
+    );
   }
 
   return (
@@ -117,14 +131,14 @@ export default function JobDetail() {
             <div className="glass p-4 text-center">
               <p className="text-gray-400 text-sm">Experience</p>
               <p className="font-semibold">
-                {job.experience || "0-3 yrs"}
+                {job.experience || "Not specified"}
               </p>
             </div>
 
             <div className="glass p-4 text-center">
               <p className="text-gray-400 text-sm">Type</p>
               <p className="font-semibold">
-                {job.type || "Full-time"}
+                {job.type || "Not specified"}
               </p>
             </div>
 
@@ -149,43 +163,50 @@ export default function JobDetail() {
             </div>
 
             {/* RESPONSIBILITIES */}
-            <div className="glass p-6 soft-shadow">
-              <h2 className="text-xl font-semibold mb-3">
-                Responsibilities
-              </h2>
+            {job.responsibilities && (
+              <div className="glass p-6 soft-shadow">
+                <h2 className="text-xl font-semibold mb-3">
+                  Responsibilities
+                </h2>
 
-              <ul className="list-disc ml-5 text-gray-700 space-y-2">
-                <li>Provide patient consultations</li>
-                <li>Maintain medical records</li>
-                <li>Work with hospital staff</li>
-                <li>Ensure quality care</li>
-              </ul>
-            </div>
+                <ul className="list-disc ml-5 text-gray-700 space-y-2">
+                  {job.responsibilities
+                    .split(",")
+                    .map((item: string, i: number) => (
+                      <li key={i}>{item.trim()}</li>
+                    ))}
+                </ul>
+              </div>
+            )}
 
             {/* REQUIREMENTS */}
-            <div className="glass p-6 soft-shadow">
-              <h2 className="text-xl font-semibold mb-3">
-                Requirements
-              </h2>
+            {job.requirements && (
+              <div className="glass p-6 soft-shadow">
+                <h2 className="text-xl font-semibold mb-3">
+                  Requirements
+                </h2>
 
-              <ul className="list-disc ml-5 text-gray-700 space-y-2">
-                <li>Valid medical degree</li>
-                <li>Registration with medical council</li>
-                <li>Good communication skills</li>
-                <li>Relevant experience preferred</li>
-              </ul>
-            </div>
+                <ul className="list-disc ml-5 text-gray-700 space-y-2">
+                  {job.requirements
+                    .split(",")
+                    .map((item: string, i: number) => (
+                      <li key={i}>{item.trim()}</li>
+                    ))}
+                </ul>
+              </div>
+            )}
 
           </div>
 
-          {/* RIGHT SIDE (APPLY BOX) */}
+          {/* RIGHT SIDE */}
           <div className="glass p-6 soft-shadow h-fit">
 
             <button
               onClick={applyJob}
-              className="w-full py-3 bg-black text-white rounded-full hover:opacity-80 transition"
+              disabled={applying}
+              className="w-full py-3 bg-black text-white rounded-full hover:opacity-80 transition disabled:opacity-50"
             >
-              Apply Now
+              {applying ? "Applying..." : "Apply Now"}
             </button>
 
             {message && (
