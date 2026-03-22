@@ -14,7 +14,6 @@ export default function UserDashboard() {
 
     const checkUserAndFetch = async () => {
 
-      // 🔐 GET USER
       const { data } = await supabase.auth.getUser();
       const user = data?.user;
 
@@ -23,23 +22,31 @@ export default function UserDashboard() {
         return;
       }
 
-      // 🔥 CHECK ROLE
+      // ✅ CHECK ROLE
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", user.id)
         .single();
 
-      // ❌ IF ADMIN → REDIRECT
       if (profile?.role === "admin") {
         router.push("/admin/dashboard");
         return;
       }
 
-      // ✅ FETCH APPLICATIONS
+      // ✅ FETCH APPLICATIONS + JOB DATA
       const { data: apps } = await supabase
         .from("applications")
-        .select("*")
+        .select(`
+          id,
+          status,
+          jobs (
+            title,
+            hospital_name,
+            location,
+            salary
+          )
+        `)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -51,6 +58,7 @@ export default function UserDashboard() {
 
   }, [router]);
 
+  // ⏳ LOADING
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -64,26 +72,52 @@ export default function UserDashboard() {
   return (
     <div className="min-h-screen px-6 py-20">
 
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
 
-        <h1 className="text-3xl font-semibold mb-8 text-center">
-          My Dashboard
+        <h1 className="text-3xl font-semibold mb-10 text-center">
+          My Applications
         </h1>
 
         {applications.length === 0 ? (
           <p className="text-center text-gray-500">
-            No applications yet.
+            You haven’t applied to any jobs yet.
           </p>
         ) : (
-          applications.map((app) => (
-            <div
-              key={app.id}
-              className="glass soft-shadow p-6 mb-4"
-            >
-              <p><strong>Job ID:</strong> {app.job_id}</p>
-              <p><strong>Status:</strong> {app.status}</p>
-            </div>
-          ))
+          <div className="space-y-6">
+
+            {applications.map((app) => (
+              <div
+                key={app.id}
+                className="glass soft-shadow p-6 fade-up"
+              >
+
+                <h2 className="text-xl font-semibold">
+                  {app.jobs?.title}
+                </h2>
+
+                <p className="text-gray-500">
+                  {app.jobs?.hospital_name}
+                </p>
+
+                <p className="mt-2 text-sm">
+                  📍 {app.jobs?.location}
+                </p>
+
+                <p className="text-sm">
+                  💰 {app.jobs?.salary || "Not disclosed"}
+                </p>
+
+                <p className="mt-4 text-sm">
+                  Status:{" "}
+                  <span className="font-semibold text-blue-600">
+                    {app.status}
+                  </span>
+                </p>
+
+              </div>
+            ))}
+
+          </div>
         )}
 
       </div>
