@@ -12,11 +12,12 @@ export default function JobDetail() {
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-  const [applying, setApplying] = useState(false);
 
-  // 📦 FETCH JOB
+  // Fetch job
   useEffect(() => {
+
     const fetchJob = async () => {
+
       const { data, error } = await supabase
         .from("jobs")
         .select("*")
@@ -30,12 +31,11 @@ export default function JobDetail() {
     };
 
     if (id) fetchJob();
+
   }, [id]);
 
-  // 📝 APPLY JOB (FIXED)
+  // Apply job
   const applyJob = async () => {
-
-    setMessage("");
 
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -44,91 +44,70 @@ export default function JobDetail() {
       return;
     }
 
-    setApplying(true);
-
-    // ✅ CHECK ALREADY APPLIED
+    // check existing
     const { data: existing } = await supabase
       .from("applications")
       .select("id")
       .eq("job_id", id)
-      .eq("user_id", user.id) // ✅ FIXED
+      .eq("user_id", user.id)
       .maybeSingle();
 
     if (existing) {
-      setMessage("You already applied to this job.");
-      setApplying(false);
+      setMessage("You already applied.");
       return;
     }
 
-    // ✅ INSERT
+    // insert
     const { error } = await supabase
       .from("applications")
       .insert({
         job_id: id,
-        user_id: user.id, // ✅ FIXED
+        user_id: user.id,
         status: "pending"
       });
 
     if (error) {
-      console.log(error);
       setMessage(error.message);
     } else {
       setMessage("Application submitted successfully.");
     }
 
-    setApplying(false);
   };
 
-  // ⏳ LOADING
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading job...</p>
-      </div>
-    );
-  }
-
-  // ❌ NOT FOUND
-  if (!job) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Job not found.</p>
-      </div>
-    );
+    return <p className="p-10">Loading...</p>;
   }
 
   return (
     <div className="min-h-screen px-6 py-20">
 
-      <div className="max-w-3xl mx-auto glass soft-shadow p-8 fade-up">
+      <div className="max-w-3xl mx-auto">
 
         <h1 className="text-4xl font-semibold">
           {job.title}
         </h1>
 
-        <p className="mt-2 text-gray-500">
+        <p className="mt-3 text-gray-500">
           {job.hospital_name} • {job.location}
         </p>
 
-        <p className="mt-6 text-lg">
+        <p className="mt-6">
+          💰 {job.salary}
+        </p>
+
+        <p className="mt-8 text-gray-700">
           {job.description}
         </p>
 
-        <div className="mt-6 space-y-2 text-gray-600">
-          <p>💰 Salary: {job.salary || "Not disclosed"}</p>
-          <p>🩺 Profession: {job.profession}</p>
-        </div>
-
         <button
           onClick={applyJob}
-          disabled={applying}
-          className="mt-10 btn-primary w-full"
+          className="mt-10 px-6 py-3 bg-black text-white rounded-full"
         >
-          {applying ? "Applying..." : "Apply Now"}
+          Apply Now
         </button>
 
         {message && (
-          <p className="mt-6 text-center text-green-600">
+          <p className="mt-4 text-green-600">
             {message}
           </p>
         )}
