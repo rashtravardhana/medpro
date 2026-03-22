@@ -11,6 +11,13 @@ export default function PostJobPage() {
   const [salary, setSalary] = useState("");
   const [description, setDescription] = useState("");
   const [profession, setProfession] = useState("");
+
+  // 🆕 NEW FIELDS
+  const [experience, setExperience] = useState("");
+  const [type, setType] = useState("");
+  const [responsibilities, setResponsibilities] = useState("");
+  const [requirements, setRequirements] = useState("");
+
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -49,7 +56,7 @@ export default function PostJobPage() {
       return;
     }
 
-    // 📤 INSERT JOB
+    // 📤 INSERT JOB (UPDATED)
     const { error } = await supabase
       .from("jobs")
       .insert({
@@ -59,6 +66,10 @@ export default function PostJobPage() {
         salary,
         description,
         profession,
+        experience,
+        type,
+        responsibilities,
+        requirements,
         admin_id: user.id
       });
 
@@ -78,12 +89,15 @@ export default function PostJobPage() {
     setSalary("");
     setDescription("");
     setProfession("");
+    setExperience("");
+    setType("");
+    setResponsibilities("");
+    setRequirements("");
 
     setLoading(false);
   };
 
   return (
-
     <div className="min-h-screen px-6 py-20">
 
       <div className="max-w-xl mx-auto glass soft-shadow p-8 fade-up">
@@ -92,7 +106,7 @@ export default function PostJobPage() {
           Post a Job
         </h1>
 
-        {/* INPUTS */}
+        {/* BASIC INFO */}
 
         <input
           type="text"
@@ -140,6 +154,43 @@ export default function PostJobPage() {
           <option value="Nursing">Nursing</option>
           <option value="Allied Healthcare">Allied Healthcare</option>
         </select>
+
+        {/* 🆕 NEW SECTION */}
+
+        <input
+          type="text"
+          placeholder="Experience (e.g. 2+ years)"
+          className="w-full border p-3 rounded mb-4"
+          value={experience}
+          onChange={(e)=>setExperience(e.target.value)}
+        />
+
+        <select
+          className="w-full border p-3 rounded mb-4"
+          value={type}
+          onChange={(e)=>setType(e.target.value)}
+        >
+          <option value="">Job Type</option>
+          <option value="Full-time">Full-time</option>
+          <option value="Part-time">Part-time</option>
+          <option value="Contract">Contract</option>
+        </select>
+
+        <textarea
+          placeholder="Responsibilities (comma separated)"
+          className="w-full border p-3 rounded mb-4"
+          value={responsibilities}
+          onChange={(e)=>setResponsibilities(e.target.value)}
+        />
+
+        <textarea
+          placeholder="Requirements (comma separated)"
+          className="w-full border p-3 rounded mb-4"
+          value={requirements}
+          onChange={(e)=>setRequirements(e.target.value)}
+        />
+
+        {/* DESCRIPTION */}
 
         <textarea
           placeholder="Job Description"
