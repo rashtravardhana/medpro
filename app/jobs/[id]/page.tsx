@@ -15,12 +15,11 @@ export default function JobDetail() {
   const [message, setMessage] = useState("");
   const [applying, setApplying] = useState(false);
 
-  // 🔹 FETCH JOB + ROLE
   useEffect(() => {
 
     const fetchData = async () => {
 
-      // 📦 FETCH JOB
+      // FETCH JOB
       const { data: jobData, error } = await supabase
         .from("jobs")
         .select("*")
@@ -33,7 +32,7 @@ export default function JobDetail() {
 
       setJob(jobData);
 
-      // 🔐 FETCH USER ROLE
+      // GET USER ROLE
       const { data } = await supabase.auth.getUser();
       const user = data?.user;
 
@@ -54,7 +53,6 @@ export default function JobDetail() {
 
   }, [id]);
 
-  // 🔹 APPLY JOB
   const applyJob = async () => {
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -64,16 +62,16 @@ export default function JobDetail() {
       return;
     }
 
-    // ❌ BLOCK ADMIN
+    // BLOCK ADMIN
     if (role === "admin") {
-      setMessage("Admins cannot apply for jobs.");
+      setMessage("Admins cannot apply for jobs");
       return;
     }
 
     setApplying(true);
     setMessage("");
 
-    // ✅ CHECK EXISTING
+    // CHECK EXISTING
     const { data: existing } = await supabase
       .from("applications")
       .select("id")
@@ -82,12 +80,12 @@ export default function JobDetail() {
       .maybeSingle();
 
     if (existing) {
-      setMessage("You already applied.");
+      setMessage("You already applied");
       setApplying(false);
       return;
     }
 
-    // ✅ INSERT
+    // INSERT
     const { error } = await supabase
       .from("applications")
       .insert({
@@ -99,13 +97,12 @@ export default function JobDetail() {
     if (error) {
       setMessage(error.message);
     } else {
-      setMessage("Application submitted successfully.");
+      setMessage("Application submitted successfully");
     }
 
     setApplying(false);
   };
 
-  // ⏳ LOADING
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -114,7 +111,6 @@ export default function JobDetail() {
     );
   }
 
-  // ❌ NOT FOUND
   if (!job) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -128,8 +124,7 @@ export default function JobDetail() {
 
       <div className="max-w-5xl mx-auto">
 
-        {/* 🔥 HEADER */}
-        <div className="glass p-8 soft-shadow fade-up">
+        <div className="glass p-8 soft-shadow">
 
           <h1 className="text-4xl font-semibold">
             {job.title}
@@ -139,81 +134,49 @@ export default function JobDetail() {
             {job.hospital_name} • {job.location}
           </p>
 
-          {/* 🧾 HIGHLIGHTS */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
 
-            <div className="glass p-4 text-center">
-              <p className="text-gray-400 text-sm">Salary</p>
-              <p className="font-semibold">
-                {job.salary || "Not disclosed"}
-              </p>
+            <div className="glass p-3 text-center">
+              Salary: {job.salary || "Not disclosed"}
             </div>
 
-            <div className="glass p-4 text-center">
-              <p className="text-gray-400 text-sm">Location</p>
-              <p className="font-semibold">
-                {job.location}
-              </p>
+            <div className="glass p-3 text-center">
+              Exp: {job.experience || "N/A"}
             </div>
 
-            <div className="glass p-4 text-center">
-              <p className="text-gray-400 text-sm">Experience</p>
-              <p className="font-semibold">
-                {job.experience || "Not specified"}
-              </p>
-            </div>
-
-            <div className="glass p-4 text-center">
-              <p className="text-gray-400 text-sm">Type</p>
-              <p className="font-semibold">
-                {job.type || "Not specified"}
-              </p>
+            <div className="glass p-3 text-center">
+              Type: {job.type || "N/A"}
             </div>
 
           </div>
 
         </div>
 
-        {/* 📄 DETAILS */}
         <div className="mt-10 grid md:grid-cols-3 gap-10">
 
-          {/* LEFT */}
           <div className="md:col-span-2 space-y-6">
 
-            {/* DESCRIPTION */}
-            <div className="glass p-6 soft-shadow">
-              <h2 className="font-semibold mb-2">
-                About this role
-              </h2>
-              <p className="text-gray-700">
-                {job.description}
-              </p>
+            <div className="glass p-6">
+              <h2 className="font-semibold mb-2">Description</h2>
+              <p>{job.description}</p>
             </div>
 
-            {/* RESPONSIBILITIES */}
             {job.responsibilities && (
-              <div className="glass p-6 soft-shadow">
-                <h2 className="font-semibold mb-2">
-                  Responsibilities
-                </h2>
-
-                <ul className="list-disc ml-5 space-y-1 text-gray-700">
-                  {job.responsibilities.split(",").map((r: string, i: number) => (
+              <div className="glass p-6">
+                <h2 className="font-semibold mb-2">Responsibilities</h2>
+                <ul className="list-disc ml-5">
+                  {job.responsibilities.split(",").map((r, i) => (
                     <li key={i}>{r.trim()}</li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {/* REQUIREMENTS */}
             {job.requirements && (
-              <div className="glass p-6 soft-shadow">
-                <h2 className="font-semibold mb-2">
-                  Requirements
-                </h2>
-
-                <ul className="list-disc ml-5 space-y-1 text-gray-700">
-                  {job.requirements.split(",").map((r: string, i: number) => (
+              <div className="glass p-6">
+                <h2 className="font-semibold mb-2">Requirements</h2>
+                <ul className="list-disc ml-5">
+                  {job.requirements.split(",").map((r, i) => (
                     <li key={i}>{r.trim()}</li>
                   ))}
                 </ul>
@@ -222,10 +185,8 @@ export default function JobDetail() {
 
           </div>
 
-          {/* RIGHT (APPLY BOX) */}
-          <div className="glass p-6 soft-shadow h-fit">
+          <div className="glass p-6 h-fit">
 
-            {/* 👨‍⚕️ DOCTOR */}
             {role === "doctor" && (
               <button
                 onClick={applyJob}
@@ -236,23 +197,17 @@ export default function JobDetail() {
               </button>
             )}
 
-            {/* 🏥 ADMIN */}
             {role === "admin" && (
               <p className="text-center text-gray-500">
-                Admin cannot apply for jobs
+                Admin cannot apply
               </p>
             )}
 
-            {/* MESSAGE */}
             {message && (
-              <p className="mt-4 text-green-600 text-center text-sm">
+              <p className="mt-4 text-green-600 text-center">
                 {message}
               </p>
             )}
-
-            <p className="mt-6 text-sm text-gray-400 text-center">
-              Apply securely through MedCareer
-            </p>
 
           </div>
 
