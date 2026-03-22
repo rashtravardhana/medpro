@@ -6,37 +6,45 @@ import supabase from "@/lib/supabase";
 
 export default function JobDetail() {
 
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id as string;
 
   const [job, setJob] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [applying, setApplying] = useState(false);
 
+  // 🔹 FETCH JOB + ROLE
   useEffect(() => {
 
     const fetchData = async () => {
 
-      // job
-      const { data } = await supabase
+      // 📦 FETCH JOB
+      const { data: jobData, error } = await supabase
         .from("jobs")
         .select("*")
         .eq("id", id)
         .single();
 
-      setJob(data);
+      if (error) {
+        console.log(error);
+      }
 
-      // role
-      const { data: userData } = await supabase.auth.getUser();
+      setJob(jobData);
 
-      if (userData?.user) {
+      // 🔐 FETCH USER ROLE
+      const { data } = await supabase.auth.getUser();
+      const user = data?.user;
+
+      if (user) {
         const { data: profile } = await supabase
           .from("profiles")
           .select("role")
-          .eq("id", userData.user.id)
+          .eq("id", user.id)
           .single();
 
-        setRole(profile?.role);
+        setRole(profile?.role || null);
       }
 
       setLoading(false);
@@ -46,6 +54,7 @@ export default function JobDetail() {
 
   }, [id]);
 
+  // 🔹 APPLY JOB
   const applyJob = async () => {
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -55,6 +64,16 @@ export default function JobDetail() {
       return;
     }
 
+    // ❌ BLOCK ADMIN
+    if (role === "admin") {
+      setMessage("Admins cannot apply for jobs.");
+      return;
+    }
+
+    setApplying(true);
+    setMessage("");
+
+    // ✅ CHECK EXISTING
     const { data: existing } = await supabase
       .from("applications")
       .select("id")
@@ -63,79 +82,139 @@ export default function JobDetail() {
       .maybeSingle();
 
     if (existing) {
-      setMessage("Already applied");
+      setMessage("You already applied.");
+      setApplying(false);
       return;
     }
 
-    await supabase.from("applications").insert({
-      job_id: id,
-      user_id: user.id,
-      status: "pending"
-    });
+    // ✅ INSERT
+    const { error } = await supabase
+      .from("applications")
+      .insert({
+        job_id: id,
+        user_id: user.id,
+        status: "pending"
+      });
 
-    setMessage("Application submitted");
+    if (error) {
+      setMessage(error.message);
+    } else {
+      setMessage("Application submitted successfully.");
+    }
+
+    setApplying(false);
   };
 
-  if (loading) return <p className="p-10">Loading...</p>;
+  // ⏳ LOADING
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading job...</p>
+      </div>
+    );
+  }
+
+  // ❌ NOT FOUND
+  if (!job) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p className="text-gray-500">Job not found</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen px-6 py-20">
 
       <div className="max-w-5xl mx-auto">
 
-        <div className="glass p-8 soft-shadow">
+        {/* 🔥 HEADER */}
+        <div className="glass p-8 soft-shadow fade-up">
 
-          <h1 className="text-4xl font-semibold">{job.title}</h1>
+          <h1 className="text-4xl font-semibold">
+            {job.title}
+          </h1>
 
           <p className="text-gray-500 mt-2">
             {job.hospital_name} • {job.location}
           </p>
 
+          {/* 🧾 HIGHLIGHTS */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
 
-            <div className="glass p-3 text-center">
-              Salary: {job.salary}
+            <div className="glass p-4 text-center">
+              <p className="text-gray-400 text-sm">Salary</p>
+              <p className="font-semibold">
+                {job.salary || "Not disclosed"}
+              </p>
             </div>
 
-            <div className="glass p-3 text-center">
-              Exp: {job.experience || "N/A"}
+            <div className="glass p-4 text-center">
+              <p className="text-gray-400 text-sm">Location</p>
+              <p className="font-semibold">
+                {job.location}
+              </p>
             </div>
 
-            <div className="glass p-3 text-center">
-              Type: {job.type || "N/A"}
+            <div className="glass p-4 text-center">
+              <p className="text-gray-400 text-sm">Experience</p>
+              <p className="font-semibold">
+                {job.experience || "Not specified"}
+              </p>
+            </div>
+
+            <div className="glass p-4 text-center">
+              <p className="text-gray-400 text-sm">Type</p>
+              <p className="font-semibold">
+                {job.type || "Not specified"}
+              </p>
             </div>
 
           </div>
 
         </div>
 
-        {/* DETAILS */}
+        {/* 📄 DETAILS */}
         <div className="mt-10 grid md:grid-cols-3 gap-10">
 
+          {/* LEFT */}
           <div className="md:col-span-2 space-y-6">
 
-            <div className="glass p-6">
-              <h2 className="font-semibold mb-2">Description</h2>
-              <p>{job.description}</p>
+            {/* DESCRIPTION */}
+            <div className="glass p-6 soft-shadow">
+              <h2 className="font-semibold mb-2">
+                About this role
+              </h2>
+              <p className="text-gray-700">
+                {job.description}
+              </p>
             </div>
 
+            {/* RESPONSIBILITIES */}
             {job.responsibilities && (
-              <div className="glass p-6">
-                <h2 className="font-semibold mb-2">Responsibilities</h2>
-                <ul className="list-disc ml-5">
-                  {job.responsibilities.split(",").map((r:any,i:any)=>(
-                    <li key={i}>{r}</li>
+              <div className="glass p-6 soft-shadow">
+                <h2 className="font-semibold mb-2">
+                  Responsibilities
+                </h2>
+
+                <ul className="list-disc ml-5 space-y-1 text-gray-700">
+                  {job.responsibilities.split(",").map((r: string, i: number) => (
+                    <li key={i}>{r.trim()}</li>
                   ))}
                 </ul>
               </div>
             )}
 
+            {/* REQUIREMENTS */}
             {job.requirements && (
-              <div className="glass p-6">
-                <h2 className="font-semibold mb-2">Requirements</h2>
-                <ul className="list-disc ml-5">
-                  {job.requirements.split(",").map((r:any,i:any)=>(
-                    <li key={i}>{r}</li>
+              <div className="glass p-6 soft-shadow">
+                <h2 className="font-semibold mb-2">
+                  Requirements
+                </h2>
+
+                <ul className="list-disc ml-5 space-y-1 text-gray-700">
+                  {job.requirements.split(",").map((r: string, i: number) => (
+                    <li key={i}>{r.trim()}</li>
                   ))}
                 </ul>
               </div>
@@ -143,25 +222,39 @@ export default function JobDetail() {
 
           </div>
 
-          {/* APPLY BOX */}
-          {role === "doctor" && (
-            <div className="glass p-6 h-fit">
+          {/* RIGHT (APPLY BOX) */}
+          <div className="glass p-6 soft-shadow h-fit">
 
+            {/* 👨‍⚕️ DOCTOR */}
+            {role === "doctor" && (
               <button
                 onClick={applyJob}
-                className="w-full btn-primary"
+                disabled={applying}
+                className="w-full btn-primary disabled:opacity-50"
               >
-                Apply Now
+                {applying ? "Applying..." : "Apply Now"}
               </button>
+            )}
 
-              {message && (
-                <p className="mt-4 text-green-600 text-center">
-                  {message}
-                </p>
-              )}
+            {/* 🏥 ADMIN */}
+            {role === "admin" && (
+              <p className="text-center text-gray-500">
+                Admin cannot apply for jobs
+              </p>
+            )}
 
-            </div>
-          )}
+            {/* MESSAGE */}
+            {message && (
+              <p className="mt-4 text-green-600 text-center text-sm">
+                {message}
+              </p>
+            )}
+
+            <p className="mt-6 text-sm text-gray-400 text-center">
+              Apply securely through MedCareer
+            </p>
+
+          </div>
 
         </div>
 
