@@ -6,145 +6,188 @@ import supabase from "@/lib/supabase";
 
 export default function AuthPage() {
 
-const router = useRouter();
+  const router = useRouter();
 
-const [name,setName] = useState("");
-const [role,setRole] = useState("doctor");
-const [profession,setProfession] = useState("");
-const [email,setEmail] = useState("");
-const [password,setPassword] = useState("");
-const [message,setMessage] = useState("");
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("doctor");
+  const [profession, setProfession] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
 
-const handleRegister = async () => {
+  // 🔐 REGISTER
+  const handleRegister = async () => {
 
-const { data,error } = await supabase.auth.signUp({
-email,
-password
-})
+    setMessage("");
 
-if(error){
-setMessage(error.message)
-return
-}
+    // ✅ VALIDATION
+    if (!name || !email || !password) {
+      setMessage("Please fill all required fields");
+      return;
+    }
 
-if(data.user){
+    if (role === "doctor" && !profession) {
+      setMessage("Please select profession");
+      return;
+    }
 
-await supabase.from("profiles").insert({
-id: data.user.id,
-name,
-role,
-profession
-})
+    // 🔐 CREATE USER
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password
+    });
 
-setMessage("Registration successful. Please login.")
-}
-}
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
 
-const handleLogin = async () => {
+    if (data.user) {
 
-const { data,error } = await supabase.auth.signInWithPassword({
-email,
-password
-})
+      // 🧾 INSERT PROFILE
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert({
+          id: data.user.id,
+          name,
+          role,
+          profession: role === "doctor" ? profession : null
+        });
 
-if(error){
-setMessage(error.message)
-return
-}
+      if (profileError) {
+        setMessage(profileError.message);
+        return;
+      }
 
-const { data:profile } = await supabase
-.from("profiles")
-.select("role")
-.eq("id",data.user.id)
-.single()
+      setMessage("Registration successful. Please login.");
 
-if(profile?.role === "admin"){
-router.push("/admin/dashboard")
-}else{
-router.push("/jobs")
-}
-}
+      // 🔄 RESET
+      setName("");
+      setEmail("");
+      setPassword("");
+      setProfession("");
+    }
+  };
 
-return(
+  // 🔐 LOGIN
+  const handleLogin = async () => {
 
-<div className="min-h-screen flex items-center justify-center bg-white text-black">
+    setMessage("");
 
-<div className="w-full max-w-md p-8 border rounded-xl">
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
-<h1 className="text-3xl font-semibold mb-6 text-center">
-Login / Register
-</h1>
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
 
-<input
-type="text"
-placeholder="Full Name"
-className="w-full border p-3 rounded mb-4 text-black"
-value={name}
-onChange={(e)=>setName(e.target.value)}
-/>
+    // 📦 GET PROFILE
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
 
-<select
-className="w-full border p-3 rounded mb-4 text-black"
-value={role}
-onChange={(e)=>setRole(e.target.value)}
->
-<option value="doctor">Doctor</option>
-<option value="admin">Hospital Admin</option>
-</select>
+    // 🚀 REDIRECT BASED ON ROLE
+    if (profile?.role === "admin") {
+      router.push("/admin/dashboard");
+    } else {
+      router.push("/jobs");
+    }
+  };
 
-<select
-className="w-full border p-3 rounded mb-4 text-black"
-value={profession}
-onChange={(e)=>setProfession(e.target.value)}
->
-<option value="">Select Profession</option>
-<option value="MBBS">MBBS</option>
-<option value="BDS">BDS</option>
-<option value="BAMS">BAMS</option>
-<option value="BHMS">BHMS</option>
-<option value="BUMS">BUMS</option>
-<option value="Nursing">Nursing</option>
-<option value="Allied Healthcare">Allied Healthcare</option>
-</select>
+  return (
+    <div className="min-h-screen flex items-center justify-center">
 
-<input
-type="email"
-placeholder="Email"
-className="w-full border p-3 rounded mb-4 text-black"
-value={email}
-onChange={(e)=>setEmail(e.target.value)}
-/>
+      <div className="w-full max-w-md p-8 glass soft-shadow fade-up">
 
-<input
-type="password"
-placeholder="Password"
-className="w-full border p-3 rounded mb-6 text-black"
-value={password}
-onChange={(e)=>setPassword(e.target.value)}
-/>
+        <h1 className="text-3xl font-semibold mb-6 text-center">
+          Login / Register
+        </h1>
 
-<button
-onClick={handleLogin}
-className="w-full bg-black text-white py-3 rounded mb-3"
->
-Login
-</button>
+        {/* NAME */}
+        <input
+          type="text"
+          placeholder="Full Name"
+          className="w-full border p-3 rounded mb-4"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
 
-<button
-onClick={handleRegister}
-className="w-full border py-3 rounded"
->
-Register
-</button>
+        {/* ROLE */}
+        <select
+          className="w-full border p-3 rounded mb-4"
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+        >
+          <option value="doctor">Doctor</option>
+          <option value="admin">Hospital Admin</option>
+        </select>
 
-{message && (
-<p className="mt-4 text-center text-red-600">
-{message}
-</p>
-)}
+        {/* 🔥 SHOW ONLY FOR DOCTOR */}
+        {role === "doctor" && (
+          <select
+            className="w-full border p-3 rounded mb-4"
+            value={profession}
+            onChange={(e) => setProfession(e.target.value)}
+          >
+            <option value="">Select Profession</option>
+            <option value="MBBS">MBBS</option>
+            <option value="BDS">BDS</option>
+            <option value="BAMS">BAMS</option>
+            <option value="BHMS">BHMS</option>
+            <option value="BUMS">BUMS</option>
+            <option value="Nursing">Nursing</option>
+            <option value="Allied Healthcare">Allied Healthcare</option>
+          </select>
+        )}
 
-</div>
+        {/* EMAIL */}
+        <input
+          type="email"
+          placeholder="Email"
+          className="w-full border p-3 rounded mb-4"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-</div>
-)
+        {/* PASSWORD */}
+        <input
+          type="password"
+          placeholder="Password"
+          className="w-full border p-3 rounded mb-6"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        {/* LOGIN */}
+        <button
+          onClick={handleLogin}
+          className="w-full btn-primary mb-3"
+        >
+          Login
+        </button>
+
+        {/* REGISTER */}
+        <button
+          onClick={handleRegister}
+          className="w-full btn-secondary"
+        >
+          Register
+        </button>
+
+        {/* MESSAGE */}
+        {message && (
+          <p className="mt-4 text-center text-red-500">
+            {message}
+          </p>
+        )}
+
+      </div>
+
+    </div>
+  );
 }
