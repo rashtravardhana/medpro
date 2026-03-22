@@ -12,124 +12,123 @@ export default function JobDetail() {
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [applying, setApplying] = useState(false);
 
-  // Fetch job details
+  // 📦 FETCH JOB
   useEffect(() => {
-
     const fetchJob = async () => {
-
       const { data, error } = await supabase
         .from("jobs")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (error) {
-        console.log(error);
-      }
+      if (error) console.log(error);
 
       setJob(data);
       setLoading(false);
     };
 
     if (id) fetchJob();
-
   }, [id]);
 
-
-  // Apply for job
+  // 📝 APPLY JOB (FIXED)
   const applyJob = async () => {
+
+    setMessage("");
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    // If user not logged in
     if (!user) {
       window.location.href = "/auth";
       return;
     }
 
-    // Check if already applied
-    const { data: existingApplication } = await supabase
-      .from("applications")
-      .select("*")
-      .eq("job_id", id)
-      .eq("doctor_id", user.id)
-      .single();
+    setApplying(true);
 
-    if (existingApplication) {
+    // ✅ CHECK ALREADY APPLIED
+    const { data: existing } = await supabase
+      .from("applications")
+      .select("id")
+      .eq("job_id", id)
+      .eq("user_id", user.id) // ✅ FIXED
+      .maybeSingle();
+
+    if (existing) {
       setMessage("You already applied to this job.");
+      setApplying(false);
       return;
     }
 
-    // Insert application
+    // ✅ INSERT
     const { error } = await supabase
       .from("applications")
-      .insert([
-        {
-          job_id: id,
-          doctor_id: user.id,
-          status: "pending",
-        }
-      ]);
+      .insert({
+        job_id: id,
+        user_id: user.id, // ✅ FIXED
+        status: "pending"
+      });
 
     if (error) {
       console.log(error);
-      setMessage("Application failed.");
+      setMessage(error.message);
     } else {
       setMessage("Application submitted successfully.");
     }
 
+    setApplying(false);
   };
 
-
+  // ⏳ LOADING
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-neutral-500 text-lg">Loading job...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading job...</p>
       </div>
     );
   }
 
-
+  // ❌ NOT FOUND
   if (!job) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-neutral-500 text-lg">Job not found.</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Job not found.</p>
       </div>
     );
   }
 
-
   return (
-    <div className="min-h-screen bg-white px-6 py-20">
+    <div className="min-h-screen px-6 py-20">
 
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto glass soft-shadow p-8 fade-up">
 
         <h1 className="text-4xl font-semibold">
           {job.title}
         </h1>
 
-        <p className="mt-3 text-neutral-500">
+        <p className="mt-2 text-gray-500">
           {job.hospital_name} • {job.location}
         </p>
 
-        <p className="mt-8 text-neutral-700">
+        <p className="mt-6 text-lg">
           {job.description}
         </p>
 
-        <p className="mt-6 text-sm text-neutral-400">
-          Salary: {job.salary}
-        </p>
+        <div className="mt-6 space-y-2 text-gray-600">
+          <p>💰 Salary: {job.salary || "Not disclosed"}</p>
+          <p>🩺 Profession: {job.profession}</p>
+        </div>
 
         <button
           onClick={applyJob}
-          className="mt-10 px-6 py-3 bg-black text-white rounded-full hover:opacity-80 transition"
+          disabled={applying}
+          className="mt-10 btn-primary w-full"
         >
-          Apply Now
+          {applying ? "Applying..." : "Apply Now"}
         </button>
 
         {message && (
-          <p className="mt-6 text-green-600">
+          <p className="mt-6 text-center text-green-600">
             {message}
           </p>
         )}
@@ -138,5 +137,4 @@ export default function JobDetail() {
 
     </div>
   );
-
 }
