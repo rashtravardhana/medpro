@@ -47,31 +47,89 @@ export default function AdminDashboard() {
 
   }, [router]);
 
+  // ⏳ LOADING
   if (loading) {
-    return <p className="p-10">Loading dashboard...</p>;
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p className="text-gray-500 animate-pulse">
+          Loading dashboard...
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div className="p-10">
+    <div className="min-h-screen px-6 py-20">
 
-      <h1 className="text-3xl mb-6">Admin Dashboard</h1>
+      <div className="max-w-5xl mx-auto">
 
-      <a href="/post-job" className="btn-primary">
-        Post Job
-      </a>
+        <div className="flex justify-between items-center mb-10">
 
-      <div className="mt-8 space-y-4">
+          <h1 className="text-3xl font-semibold">
+            Admin Dashboard
+          </h1>
 
-        {jobs.length === 0 && <p>No jobs yet</p>}
+          <a href="/post-job" className="btn-primary">
+            + Post Job
+          </a>
 
-        {jobs.map(job => (
-          <div key={job.id} className="glass p-4">
-            <h2>{job.title}</h2>
-            <p>{job.location}</p>
+        </div>
+
+        {jobs.length === 0 ? (
+          <p className="text-gray-500">
+            No jobs posted yet.
+          </p>
+        ) : (
+          <div className="space-y-6">
+
+            {jobs.map((job) => (
+              <div
+                key={job.id}
+                className="glass soft-shadow p-6 fade-up"
+              >
+
+                <h2 className="text-xl font-semibold">
+                  {job.title}
+                </h2>
+
+                <p className="text-gray-500">
+                  {job.hospital_name}
+                </p>
+
+                <p className="mt-2 text-sm">
+                  📍 {job.location}
+                </p>
+
+                <p className="text-sm">
+                  💰 {job.salary || "Not disclosed"}
+                </p>
+
+                <div className="mt-4 flex gap-4">
+
+                  <a
+                    href={`/jobs/${job.id}`}
+                    className="text-blue-600 text-sm"
+                  >
+                    View Job
+                  </a>
+
+                  <a
+                    href={`/admin/applicants/${job.id}`}
+                    className="text-green-600 text-sm"
+                  >
+                    View Applicants
+                  </a>
+
+                </div>
+
+              </div>
+            ))}
+
           </div>
-        ))}
+        )}
 
       </div>
+
     </div>
   );
 }
