@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "@/lib/supabase";
 
@@ -14,24 +14,50 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // 🔐 AUTO REDIRECT IF ALREADY LOGGED IN
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getUser();
+
+      if (data?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.user.id)
+          .single();
+
+        if (profile?.role === "admin") {
+          router.push("/admin/dashboard");
+        } else {
+          router.push("/jobs");
+        }
+      }
+    };
+
+    checkUser();
+  }, []);
 
   // 🔐 REGISTER
   const handleRegister = async () => {
 
     setMessage("");
+    setLoading(true);
 
-    // ✅ VALIDATION
     if (!name || !email || !password) {
       setMessage("Please fill all required fields");
+      setLoading(false);
       return;
     }
 
     if (role === "doctor" && !profession) {
       setMessage("Please select profession");
+      setLoading(false);
       return;
     }
 
-    // 🔐 CREATE USER
+    // 🔥 SIGN UP
     const { data, error } = await supabase.auth.signUp({
       email,
       password
@@ -39,40 +65,53 @@ export default function AuthPage() {
 
     if (error) {
       setMessage(error.message);
+      setLoading(false);
       return;
     }
 
     if (data.user) {
 
-      // 🧾 INSERT PROFILE
-      const { error: profileError } = await supabase
+      // ✅ CHECK IF PROFILE EXISTS (IMPORTANT FIX)
+      const { data: existingProfile } = await supabase
         .from("profiles")
-        .insert({
-          id: data.user.id,
-          name,
-          role,
-          profession: role === "doctor" ? profession : null
-        });
+        .select("id")
+        .eq("id", data.user.id)
+        .maybeSingle();
 
-      if (profileError) {
-        setMessage(profileError.message);
-        return;
+      if (!existingProfile) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: data.user.id,
+            name,
+            role,
+            profession: role === "doctor" ? profession : null
+          });
+
+        if (profileError) {
+          setMessage(profileError.message);
+          setLoading(false);
+          return;
+        }
       }
 
-      setMessage("Registration successful. Please login.");
+      setMessage("✅ Registration successful. Now login.");
 
-      // 🔄 RESET
+      // RESET
       setName("");
       setEmail("");
       setPassword("");
       setProfession("");
     }
+
+    setLoading(false);
   };
 
   // 🔐 LOGIN
   const handleLogin = async () => {
 
     setMessage("");
+    setLoading(true);
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -81,22 +120,25 @@ export default function AuthPage() {
 
     if (error) {
       setMessage(error.message);
+      setLoading(false);
       return;
     }
 
-    // 📦 GET PROFILE
+    // GET ROLE
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", data.user.id)
       .single();
 
-    // 🚀 REDIRECT BASED ON ROLE
+    // REDIRECT
     if (profile?.role === "admin") {
       router.push("/admin/dashboard");
     } else {
       router.push("/jobs");
     }
+
+    setLoading(false);
   };
 
   return (
@@ -127,7 +169,7 @@ export default function AuthPage() {
           <option value="admin">Hospital Admin</option>
         </select>
 
-        {/* 🔥 SHOW ONLY FOR DOCTOR */}
+        {/* 👨‍⚕️ ONLY DOCTOR */}
         {role === "doctor" && (
           <select
             className="w-full border p-3 rounded mb-4"
@@ -166,17 +208,19 @@ export default function AuthPage() {
         {/* LOGIN */}
         <button
           onClick={handleLogin}
-          className="w-full btn-primary mb-3"
+          disabled={loading}
+          className="w-full btn-primary mb-3 disabled:opacity-50"
         >
-          Login
+          {loading ? "Please wait..." : "Login"}
         </button>
 
         {/* REGISTER */}
         <button
           onClick={handleRegister}
-          className="w-full btn-secondary"
+          disabled={loading}
+          className="w-full btn-secondary disabled:opacity-50"
         >
-          Register
+          {loading ? "Please wait..." : "Register"}
         </button>
 
         {/* MESSAGE */}
