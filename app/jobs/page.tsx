@@ -7,84 +7,29 @@ export default function JobsPage() {
 
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  const [applyingId, setApplyingId] = useState<string | null>(null);
 
   // 🔐 GET USER + JOBS
   useEffect(() => {
 
-    const init = async () => {
+    const fetchJobs = async () => {
 
-      const { data } = await supabase.auth.getUser();
-      setUser(data?.user || null);
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-      await fetchJobs();
+      if (error) {
+        console.log(error);
+      } else {
+        setJobs(data || []);
+      }
+
+      setLoading(false);
     };
 
-    init();
+    fetchJobs();
 
   }, []);
-
-  // 📦 FETCH JOBS
-  const fetchJobs = async () => {
-
-    const { data, error } = await supabase
-      .from("jobs")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.log(error);
-    } else {
-      setJobs(data || []);
-    }
-
-    setLoading(false);
-  };
-
-  // 📝 APPLY JOB
-  const applyJob = async (jobId: string) => {
-
-    // ❌ NOT LOGGED IN
-    if (!user) {
-      alert("Please login first");
-      window.location.href = "/auth";
-      return;
-    }
-
-    setApplyingId(jobId);
-
-    // ✅ CHECK ALREADY APPLIED
-    const { data: existing } = await supabase
-      .from("applications")
-      .select("id")
-      .eq("job_id", jobId)
-      .eq("user_id", user.id) // ✅ FIXED
-      .maybeSingle();
-
-    if (existing) {
-      alert("You already applied for this job");
-      setApplyingId(null);
-      return;
-    }
-
-    // ✅ INSERT APPLICATION
-    const { error } = await supabase
-      .from("applications")
-      .insert({
-        job_id: jobId,
-        user_id: user.id, // ✅ FIXED
-        status: "pending"
-      });
-
-    if (error) {
-      alert(error.message);
-    } else {
-      alert("Application submitted successfully");
-    }
-
-    setApplyingId(null);
-  };
 
   // ⏳ LOADING
   if (loading) {
@@ -138,13 +83,13 @@ export default function JobsPage() {
                 {job.description}
               </p>
 
-              <button
-                onClick={() => applyJob(job.id)}
-                disabled={applyingId === job.id}
-                className="mt-5 bg-black text-white px-5 py-2 rounded-lg hover:opacity-80 disabled:opacity-50"
+              {/* 🔥 CHANGE IS HERE */}
+              <a
+                href={`/jobs/${job.id}`}
+                className="mt-5 inline-block bg-black text-white px-5 py-2 rounded-lg hover:opacity-80"
               >
-                {applyingId === job.id ? "Applying..." : "Apply"}
-              </button>
+                View Details
+              </a>
 
             </div>
 
