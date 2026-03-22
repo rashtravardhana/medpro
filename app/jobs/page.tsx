@@ -7,28 +7,42 @@ export default function JobsPage() {
 
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchJobs = async () => {
 
-      const { data, error } = await supabase
+    const init = async () => {
+
+      // 🔐 GET USER
+      const { data } = await supabase.auth.getUser();
+      const user = data?.user;
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        setRole(profile?.role || null);
+      }
+
+      // 📦 GET JOBS
+      const { data } = await supabase
         .from("jobs")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (!error) setJobs(data || []);
+      setJobs(data || []);
       setLoading(false);
     };
 
-    fetchJobs();
+    init();
+
   }, []);
 
   if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        Loading jobs...
-      </div>
-    );
+    return <p className="p-10">Loading...</p>;
   }
 
   return (
@@ -36,38 +50,45 @@ export default function JobsPage() {
 
       <div className="max-w-4xl mx-auto">
 
-        <h1 className="text-3xl font-semibold mb-10">
-          Available Jobs
-        </h1>
+        <h1 className="text-3xl mb-10">Available Jobs</h1>
 
         <div className="space-y-6">
 
           {jobs.map((job) => (
-            <div key={job.id} className="glass p-6 soft-shadow">
+            <div key={job.id} className="glass p-6">
 
-              <h2 className="text-xl font-semibold">
-                {job.title}
-              </h2>
-
-              <p className="text-gray-500">
-                {job.hospital_name}
-              </p>
-
+              <h2 className="text-xl font-semibold">{job.title}</h2>
+              <p>{job.hospital_name}</p>
               <p>📍 {job.location}</p>
-              <p>💰 {job.salary || "Not disclosed"}</p>
+              <p>💰 {job.salary}</p>
 
-              <a
-                href={`/jobs/${job.id}`}
-                className="mt-4 inline-block btn-primary"
-              >
-                View Details
-              </a>
+              {/* 👨‍⚕️ DOCTOR ONLY */}
+              {role === "doctor" && (
+                <a
+                  href={`/jobs/${job.id}`}
+                  className="mt-4 inline-block btn-primary"
+                >
+                  View & Apply
+                </a>
+              )}
+
+              {/* 🏥 ADMIN ONLY */}
+              {role === "admin" && (
+                <a
+                  href={`/jobs/${job.id}`}
+                  className="mt-4 inline-block btn-secondary"
+                >
+                  View Details
+                </a>
+              )}
 
             </div>
           ))}
 
         </div>
+
       </div>
+
     </div>
   );
 }
