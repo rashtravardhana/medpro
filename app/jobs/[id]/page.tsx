@@ -7,7 +7,7 @@ import supabase from "@/lib/supabase";
 export default function JobDetail() {
 
   const params = useParams();
-  const id = params?.id as string;
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
 
   const [job, setJob] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
@@ -16,6 +16,8 @@ export default function JobDetail() {
   const [applying, setApplying] = useState(false);
 
   useEffect(() => {
+
+    if (!id) return;
 
     const fetchData = async () => {
 
@@ -49,7 +51,7 @@ export default function JobDetail() {
       setLoading(false);
     };
 
-    if (id) fetchData();
+    fetchData();
 
   }, [id]);
 
@@ -62,7 +64,6 @@ export default function JobDetail() {
       return;
     }
 
-    // BLOCK ADMIN
     if (role === "admin") {
       setMessage("Admins cannot apply for jobs");
       return;
@@ -71,7 +72,6 @@ export default function JobDetail() {
     setApplying(true);
     setMessage("");
 
-    // CHECK EXISTING
     const { data: existing } = await supabase
       .from("applications")
       .select("id")
@@ -85,7 +85,6 @@ export default function JobDetail() {
       return;
     }
 
-    // INSERT
     const { error } = await supabase
       .from("applications")
       .insert({
@@ -106,7 +105,7 @@ export default function JobDetail() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading job...</p>
+        <p>Loading job...</p>
       </div>
     );
   }
@@ -114,7 +113,7 @@ export default function JobDetail() {
   if (!job) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <p className="text-gray-500">Job not found</p>
+        <p>Job not found</p>
       </div>
     );
   }
@@ -130,7 +129,7 @@ export default function JobDetail() {
             {job.title}
           </h1>
 
-          <p className="text-gray-500 mt-2">
+          <p className="mt-2 text-gray-500">
             {job.hospital_name} • {job.location}
           </p>
 
@@ -157,15 +156,15 @@ export default function JobDetail() {
           <div className="md:col-span-2 space-y-6">
 
             <div className="glass p-6">
-              <h2 className="font-semibold mb-2">Description</h2>
+              <h2>Description</h2>
               <p>{job.description}</p>
             </div>
 
             {job.responsibilities && (
               <div className="glass p-6">
-                <h2 className="font-semibold mb-2">Responsibilities</h2>
+                <h2>Responsibilities</h2>
                 <ul className="list-disc ml-5">
-                  {job.responsibilities.split(",").map((r, i) => (
+                  {job.responsibilities.split(",").map((r: string, i: number) => (
                     <li key={i}>{r.trim()}</li>
                   ))}
                 </ul>
@@ -174,9 +173,9 @@ export default function JobDetail() {
 
             {job.requirements && (
               <div className="glass p-6">
-                <h2 className="font-semibold mb-2">Requirements</h2>
+                <h2>Requirements</h2>
                 <ul className="list-disc ml-5">
-                  {job.requirements.split(",").map((r, i) => (
+                  {job.requirements.split(",").map((r: string, i: number) => (
                     <li key={i}>{r.trim()}</li>
                   ))}
                 </ul>
@@ -191,7 +190,7 @@ export default function JobDetail() {
               <button
                 onClick={applyJob}
                 disabled={applying}
-                className="w-full btn-primary disabled:opacity-50"
+                className="w-full btn-primary"
               >
                 {applying ? "Applying..." : "Apply Now"}
               </button>
