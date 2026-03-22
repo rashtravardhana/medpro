@@ -9,6 +9,7 @@ export default function Navbar() {
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
+
     const getUserAndRole = async () => {
 
       const { data } = await supabase.auth.getUser();
@@ -21,23 +22,26 @@ export default function Navbar() {
 
       setUser(currentUser);
 
+      // 🔥 GET ROLE
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", currentUser.id)
         .single();
 
-      if (profile) setRole(profile.role);
+      setRole(profile?.role || null);
     };
 
     getUserAndRole();
+
   }, []);
 
   return (
     <header className="sticky top-0 z-50 glass soft-shadow">
+
       <div className="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
 
-        <a href="/" className="text-lg font-semibold tracking-tight">
+        <a href="/" className="text-lg font-semibold">
           MedCareer
         </a>
 
@@ -82,6 +86,7 @@ export default function Navbar() {
           )}
 
         </div>
+
       </div>
     </header>
   );
