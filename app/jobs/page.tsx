@@ -8,9 +8,7 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔐 GET USER + JOBS
   useEffect(() => {
-
     const fetchJobs = async () => {
 
       const { data, error } = await supabase
@@ -18,30 +16,22 @@ export default function JobsPage() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.log(error);
-      } else {
-        setJobs(data || []);
-      }
-
+      if (!error) setJobs(data || []);
       setLoading(false);
     };
 
     fetchJobs();
-
   }, []);
 
-  // ⏳ LOADING
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <p className="text-gray-500 text-lg">Loading jobs...</p>
+        Loading jobs...
       </div>
     );
   }
 
   return (
-
     <div className="min-h-screen px-6 py-16">
 
       <div className="max-w-4xl mx-auto">
@@ -50,18 +40,10 @@ export default function JobsPage() {
           Available Jobs
         </h1>
 
-        {jobs.length === 0 && (
-          <p className="text-gray-500">No jobs available</p>
-        )}
-
         <div className="space-y-6">
 
           {jobs.map((job) => (
-
-            <div
-              key={job.id}
-              className="border rounded-xl p-6 shadow-sm hover:shadow-md transition"
-            >
+            <div key={job.id} className="glass p-6 soft-shadow">
 
               <h2 className="text-xl font-semibold">
                 {job.title}
@@ -71,35 +53,21 @@ export default function JobsPage() {
                 {job.hospital_name}
               </p>
 
-              <p className="mt-2">
-                📍 {job.location}
-              </p>
+              <p>📍 {job.location}</p>
+              <p>💰 {job.salary || "Not disclosed"}</p>
 
-              <p>
-                💰 {job.salary || "Not disclosed"}
-              </p>
-
-              <p className="mt-3 text-sm text-gray-600">
-                {job.description}
-              </p>
-
-              {/* 🔥 CHANGE IS HERE */}
               <a
                 href={`/jobs/${job.id}`}
-                className="mt-5 inline-block bg-black text-white px-5 py-2 rounded-lg hover:opacity-80"
+                className="mt-4 inline-block btn-primary"
               >
                 View Details
               </a>
 
             </div>
-
           ))}
 
         </div>
-
       </div>
-
     </div>
-
   );
 }
