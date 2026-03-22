@@ -21,16 +21,13 @@ export default function Navbar() {
 
       setUser(currentUser);
 
-      // ✅ FETCH ROLE FROM PROFILES TABLE
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", currentUser.id)
         .single();
 
-      if (profile) {
-        setRole(profile.role);
-      }
+      if (profile) setRole(profile.role);
     };
 
     getUserAndRole();
@@ -40,12 +37,10 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 glass soft-shadow">
       <div className="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
 
-        {/* LOGO */}
         <a href="/" className="text-lg font-semibold tracking-tight">
           MedCareer
         </a>
 
-        {/* NAV */}
         <div className="flex gap-6 text-sm text-gray-600 items-center">
 
           {!user && (
@@ -56,35 +51,24 @@ export default function Navbar() {
 
           {user && (
             <>
-              <a href="/jobs" className="hover:text-black">Jobs</a>
+              <a href="/jobs">Jobs</a>
 
-              {/* 👨‍⚕️ DOCTOR ONLY */}
+              {/* 👨‍⚕️ DOCTOR */}
               {role === "doctor" && (
                 <>
-                  <a href="/dashboard" className="hover:text-black">
-                    Dashboard
-                  </a>
-
-                  <a href="/applications" className="hover:text-black">
-                    Applications
-                  </a>
+                  <a href="/dashboard">Dashboard</a>
+                  <a href="/applications">Applications</a>
                 </>
               )}
 
-              {/* 🏥 ADMIN ONLY */}
+              {/* 🏥 ADMIN */}
               {role === "admin" && (
                 <>
-                  <a href="/admin/dashboard" className="hover:text-black">
-                    Admin
-                  </a>
-
-                  <a href="/post-job" className="hover:text-black">
-                    Post Job
-                  </a>
+                  <a href="/admin/dashboard">Admin</a>
+                  <a href="/post-job">Post Job</a>
                 </>
               )}
 
-              {/* LOGOUT */}
               <button
                 onClick={async () => {
                   await supabase.auth.signOut();
@@ -98,7 +82,6 @@ export default function Navbar() {
           )}
 
         </div>
-
       </div>
     </header>
   );
