@@ -6,36 +6,46 @@ import supabase from "@/lib/supabase";
 
 export default function JobDetail() {
 
-  const params = useParams();
-  const id = params?.id as string;
+  const { id } = useParams();
 
   const [job, setJob] = useState<any>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-  const [applying, setApplying] = useState(false);
 
-  // 🔹 FETCH JOB
   useEffect(() => {
 
-    const fetchJob = async () => {
+    const fetchData = async () => {
 
-      const { data, error } = await supabase
+      // job
+      const { data } = await supabase
         .from("jobs")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (error) console.log(error);
-
       setJob(data);
+
+      // role
+      const { data: userData } = await supabase.auth.getUser();
+
+      if (userData?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userData.user.id)
+          .single();
+
+        setRole(profile?.role);
+      }
+
       setLoading(false);
     };
 
-    if (id) fetchJob();
+    if (id) fetchData();
 
   }, [id]);
 
-  // 🔹 APPLY JOB
   const applyJob = async () => {
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -45,10 +55,6 @@ export default function JobDetail() {
       return;
     }
 
-    setApplying(true);
-    setMessage("");
-
-    // check existing
     const { data: existing } = await supabase
       .from("applications")
       .select("id")
@@ -57,169 +63,105 @@ export default function JobDetail() {
       .maybeSingle();
 
     if (existing) {
-      setMessage("You already applied.");
-      setApplying(false);
+      setMessage("Already applied");
       return;
     }
 
-    // insert
-    const { error } = await supabase
-      .from("applications")
-      .insert({
-        job_id: id,
-        user_id: user.id,
-        status: "pending"
-      });
+    await supabase.from("applications").insert({
+      job_id: id,
+      user_id: user.id,
+      status: "pending"
+    });
 
-    if (error) {
-      setMessage(error.message);
-    } else {
-      setMessage("Application submitted successfully.");
-    }
-
-    setApplying(false);
+    setMessage("Application submitted");
   };
 
-  // ⏳ LOADING
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading job...</p>
-      </div>
-    );
-  }
-
-  if (!job) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <p className="text-gray-500">Job not found</p>
-      </div>
-    );
-  }
+  if (loading) return <p className="p-10">Loading...</p>;
 
   return (
     <div className="min-h-screen px-6 py-20">
 
       <div className="max-w-5xl mx-auto">
 
-        {/* 🔥 HEADER */}
-        <div className="glass p-8 soft-shadow fade-up">
+        <div className="glass p-8 soft-shadow">
 
-          <h1 className="text-4xl font-semibold">
-            {job.title}
-          </h1>
+          <h1 className="text-4xl font-semibold">{job.title}</h1>
 
-          <p className="mt-3 text-gray-500">
+          <p className="text-gray-500 mt-2">
             {job.hospital_name} • {job.location}
           </p>
 
-          {/* 🧾 HIGHLIGHTS */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
 
-            <div className="glass p-4 text-center">
-              <p className="text-gray-400 text-sm">Salary</p>
-              <p className="font-semibold">
-                {job.salary || "Not disclosed"}
-              </p>
+            <div className="glass p-3 text-center">
+              Salary: {job.salary}
             </div>
 
-            <div className="glass p-4 text-center">
-              <p className="text-gray-400 text-sm">Location</p>
-              <p className="font-semibold">{job.location}</p>
+            <div className="glass p-3 text-center">
+              Exp: {job.experience || "N/A"}
             </div>
 
-            <div className="glass p-4 text-center">
-              <p className="text-gray-400 text-sm">Experience</p>
-              <p className="font-semibold">
-                {job.experience || "Not specified"}
-              </p>
-            </div>
-
-            <div className="glass p-4 text-center">
-              <p className="text-gray-400 text-sm">Type</p>
-              <p className="font-semibold">
-                {job.type || "Not specified"}
-              </p>
+            <div className="glass p-3 text-center">
+              Type: {job.type || "N/A"}
             </div>
 
           </div>
 
         </div>
 
-        {/* 📄 JOB DETAILS */}
+        {/* DETAILS */}
         <div className="mt-10 grid md:grid-cols-3 gap-10">
 
-          {/* LEFT SIDE */}
-          <div className="md:col-span-2 space-y-8">
+          <div className="md:col-span-2 space-y-6">
 
-            {/* ABOUT */}
-            <div className="glass p-6 soft-shadow">
-              <h2 className="text-xl font-semibold mb-3">
-                About this role
-              </h2>
-              <p className="text-gray-700">
-                {job.description}
-              </p>
+            <div className="glass p-6">
+              <h2 className="font-semibold mb-2">Description</h2>
+              <p>{job.description}</p>
             </div>
 
-            {/* RESPONSIBILITIES */}
             {job.responsibilities && (
-              <div className="glass p-6 soft-shadow">
-                <h2 className="text-xl font-semibold mb-3">
-                  Responsibilities
-                </h2>
-
-                <ul className="list-disc ml-5 text-gray-700 space-y-2">
-                  {job.responsibilities
-                    .split(",")
-                    .map((item: string, i: number) => (
-                      <li key={i}>{item.trim()}</li>
-                    ))}
+              <div className="glass p-6">
+                <h2 className="font-semibold mb-2">Responsibilities</h2>
+                <ul className="list-disc ml-5">
+                  {job.responsibilities.split(",").map((r:any,i:any)=>(
+                    <li key={i}>{r}</li>
+                  ))}
                 </ul>
               </div>
             )}
 
-            {/* REQUIREMENTS */}
             {job.requirements && (
-              <div className="glass p-6 soft-shadow">
-                <h2 className="text-xl font-semibold mb-3">
-                  Requirements
-                </h2>
-
-                <ul className="list-disc ml-5 text-gray-700 space-y-2">
-                  {job.requirements
-                    .split(",")
-                    .map((item: string, i: number) => (
-                      <li key={i}>{item.trim()}</li>
-                    ))}
+              <div className="glass p-6">
+                <h2 className="font-semibold mb-2">Requirements</h2>
+                <ul className="list-disc ml-5">
+                  {job.requirements.split(",").map((r:any,i:any)=>(
+                    <li key={i}>{r}</li>
+                  ))}
                 </ul>
               </div>
             )}
 
           </div>
 
-          {/* RIGHT SIDE */}
-          <div className="glass p-6 soft-shadow h-fit">
+          {/* APPLY BOX */}
+          {role === "doctor" && (
+            <div className="glass p-6 h-fit">
 
-            <button
-              onClick={applyJob}
-              disabled={applying}
-              className="w-full py-3 bg-black text-white rounded-full hover:opacity-80 transition disabled:opacity-50"
-            >
-              {applying ? "Applying..." : "Apply Now"}
-            </button>
+              <button
+                onClick={applyJob}
+                className="w-full btn-primary"
+              >
+                Apply Now
+              </button>
 
-            {message && (
-              <p className="mt-4 text-green-600 text-sm text-center">
-                {message}
-              </p>
-            )}
+              {message && (
+                <p className="mt-4 text-green-600 text-center">
+                  {message}
+                </p>
+              )}
 
-            <p className="mt-6 text-sm text-gray-500 text-center">
-              Apply securely through MedCareer
-            </p>
-
-          </div>
+            </div>
+          )}
 
         </div>
 
