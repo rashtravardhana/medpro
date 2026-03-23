@@ -15,13 +15,14 @@ export default function JobDetail() {
   const [message, setMessage] = useState("");
   const [applying, setApplying] = useState(false);
 
+  // 🔹 FETCH DATA
   useEffect(() => {
 
     if (!id) return;
 
     const fetchData = async () => {
 
-      // 🔹 JOB
+      // JOB
       const jobRes = await supabase
         .from("jobs")
         .select("*")
@@ -30,7 +31,7 @@ export default function JobDetail() {
 
       setJob(jobRes.data);
 
-      // 🔹 USER ROLE
+      // USER ROLE
       const userRes = await supabase.auth.getUser();
 
       if (userRes.data?.user) {
@@ -50,16 +51,19 @@ export default function JobDetail() {
 
   }, [id]);
 
+  // 🔹 APPLY JOB
   const applyJob = async () => {
 
     const userRes = await supabase.auth.getUser();
     const user = userRes.data?.user;
 
+    // ❌ NOT LOGGED IN
     if (!user) {
       window.location.href = "/auth";
       return;
     }
 
+    // ❌ ADMIN BLOCK
     if (role === "admin") {
       setMessage("Admins cannot apply");
       return;
@@ -68,7 +72,7 @@ export default function JobDetail() {
     setApplying(true);
     setMessage("");
 
-    // check existing
+    // CHECK EXISTING
     const existing = await supabase
       .from("applications")
       .select("id")
@@ -77,12 +81,12 @@ export default function JobDetail() {
       .maybeSingle();
 
     if (existing.data) {
-      setMessage("Already applied");
+      setMessage("You already applied");
       setApplying(false);
       return;
     }
 
-    // insert
+    // INSERT
     const insert = await supabase
       .from("applications")
       .insert({
@@ -94,64 +98,134 @@ export default function JobDetail() {
     if (insert.error) {
       setMessage(insert.error.message);
     } else {
-      setMessage("Applied successfully ✅");
+      setMessage("Application submitted ✅");
     }
 
     setApplying(false);
   };
 
-  if (loading) return <p className="p-10">Loading...</p>;
-  if (!job) return <p className="p-10">Job not found</p>;
+  // ⏳ LOADING
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p>Loading job...</p>
+      </div>
+    );
+  }
+
+  // ❌ NOT FOUND
+  if (!job) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p>Job not found</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen px-6 py-20">
+    <div className="min-h-screen bg-gray-50 px-6 py-16">
 
-      <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-8">
+      <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl p-10">
 
-        <h1 className="text-3xl font-semibold">{job.title}</h1>
+        {/* 🔹 TITLE */}
+        <h1 className="text-4xl font-semibold tracking-tight">
+          {job.title}
+        </h1>
 
-        <p className="text-gray-500 mt-2">
+        {/* 🔹 BASIC INFO */}
+        <p className="text-gray-500 mt-2 text-lg">
           {job.hospital_name} • {job.location}
         </p>
 
-        <div className="mt-6 grid grid-cols-2 gap-4">
+        {/* 🔹 INFO GRID */}
+        <div className="grid md:grid-cols-3 gap-4 mt-8">
 
-          <div className="p-3 border rounded">
-            💰 Salary: {job.salary || "Not disclosed"}
+          <div className="p-4 border rounded-xl">
+            <p className="text-sm text-gray-400">Salary</p>
+            <p className="font-medium">
+              {job.salary || "Not disclosed"}
+            </p>
           </div>
 
-          <div className="p-3 border rounded">
-            🧠 Experience: {job.experience || "N/A"}
+          <div className="p-4 border rounded-xl">
+            <p className="text-sm text-gray-400">Experience</p>
+            <p className="font-medium">
+              {job.experience || "N/A"}
+            </p>
           </div>
 
-          <div className="p-3 border rounded">
-            📌 Type: {job.type || "N/A"}
+          <div className="p-4 border rounded-xl">
+            <p className="text-sm text-gray-400">Job Type</p>
+            <p className="font-medium">
+              {job.type || "N/A"}
+            </p>
           </div>
 
         </div>
 
-        <div className="mt-8">
-          <h2 className="font-semibold text-lg mb-2">Description</h2>
-          <p className="text-gray-700">{job.description}</p>
+        {/* 🔹 PROFESSION */}
+        {job.profession && (
+          <div className="mt-6">
+            <p className="text-sm text-gray-400">Profession Required</p>
+            <p className="font-medium">{job.profession}</p>
+          </div>
+        )}
+
+        {/* 🔹 DESCRIPTION */}
+        <div className="mt-10">
+          <h2 className="text-xl font-semibold mb-2">Overview</h2>
+          <p className="text-gray-700 leading-relaxed">
+            {job.description}
+          </p>
         </div>
 
-        {/* APPLY */}
+        {/* 🔹 RESPONSIBILITIES */}
+        {job.responsibilities && (
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold mb-2">
+              Responsibilities
+            </h2>
+            <ul className="list-disc ml-5 space-y-1">
+              {job.responsibilities.split(",").map((item: string, i: number) => (
+                <li key={i}>{item.trim()}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* 🔹 REQUIREMENTS */}
+        {job.requirements && (
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold mb-2">
+              Requirements
+            </h2>
+            <ul className="list-disc ml-5 space-y-1">
+              {job.requirements.split(",").map((item: string, i: number) => (
+                <li key={i}>{item.trim()}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* 🔹 APPLY BUTTON */}
         {role === "doctor" && (
           <button
             onClick={applyJob}
             disabled={applying}
-            className="mt-8 bg-black text-white px-6 py-3 rounded w-full disabled:opacity-50"
+            className="mt-10 w-full bg-black text-white py-3 rounded-xl disabled:opacity-50"
           >
             {applying ? "Applying..." : "Apply Now"}
           </button>
         )}
 
+        {/* 🔹 ADMIN BLOCK */}
         {role === "admin" && (
-          <p className="mt-8 text-center text-gray-500">
-            Admin cannot apply
+          <p className="mt-10 text-center text-gray-500">
+            Admin cannot apply for this job
           </p>
         )}
 
+        {/* 🔹 MESSAGE */}
         {message && (
           <p className="mt-4 text-green-600 text-center">
             {message}
