@@ -7,8 +7,10 @@ import supabase from "@/lib/supabase";
 export default function JobDetail() {
   const params = useParams();
 
-  // handle id safely
-  const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  // ✅ FORCE STRING (FIXES BUILD ERROR)
+  const id = Array.isArray(params?.id)
+    ? params.id[0]
+    : (params?.id as string);
 
   const [job, setJob] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
@@ -20,7 +22,6 @@ export default function JobDetail() {
     if (!id) return;
 
     const fetchData = async () => {
-      // fetch job
       const { data: jobData, error } = await supabase
         .from("jobs")
         .select("*")
@@ -31,7 +32,6 @@ export default function JobDetail() {
 
       setJob(jobData);
 
-      // fetch user role
       const { data } = await supabase.auth.getUser();
 
       if (data?.user) {
@@ -67,7 +67,6 @@ export default function JobDetail() {
     setApplying(true);
     setMessage("");
 
-    // check existing
     const { data: existing } = await supabase
       .from("applications")
       .select("id")
@@ -81,7 +80,6 @@ export default function JobDetail() {
       return;
     }
 
-    // insert
     const { error } = await supabase
       .from("applications")
       .insert({
@@ -118,7 +116,6 @@ export default function JobDetail() {
 
         <p className="mt-6">{job.description}</p>
 
-        {/* DOCTOR ONLY */}
         {role === "doctor" && (
           <button
             onClick={applyJob}
@@ -129,7 +126,6 @@ export default function JobDetail() {
           </button>
         )}
 
-        {/* ADMIN BLOCK */}
         {role === "admin" && (
           <p className="mt-6 text-gray-500">
             Admin cannot apply for jobs
