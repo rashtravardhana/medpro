@@ -5,10 +5,9 @@ import { useParams } from "next/navigation";
 import supabase from "@/lib/supabase";
 
 export default function JobDetail() {
-
   const params = useParams();
 
-  // ✅ FIX: handle string | string[]
+  // handle id safely
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
 
   const [job, setJob] = useState<any>(null);
@@ -18,26 +17,21 @@ export default function JobDetail() {
   const [applying, setApplying] = useState(false);
 
   useEffect(() => {
-
-    // ❌ STOP if id not ready
     if (!id) return;
 
     const fetchData = async () => {
-
-      // 🔹 FETCH JOB
+      // fetch job
       const { data: jobData, error } = await supabase
         .from("jobs")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (error) {
-        console.log("Job error:", error.message);
-      }
+      if (error) console.log(error);
 
       setJob(jobData);
 
-      // 🔹 FETCH USER ROLE
+      // fetch user role
       const { data } = await supabase.auth.getUser();
 
       if (data?.user) {
@@ -54,22 +48,17 @@ export default function JobDetail() {
     };
 
     fetchData();
-
   }, [id]);
 
-  // 🔹 APPLY JOB
   const applyJob = async () => {
-
     const { data } = await supabase.auth.getUser();
     const user = data?.user;
 
-    // ❌ NOT LOGGED IN
     if (!user) {
       window.location.href = "/auth";
       return;
     }
 
-    // ❌ BLOCK ADMIN
     if (role === "admin") {
       setMessage("Admins cannot apply");
       return;
@@ -78,7 +67,7 @@ export default function JobDetail() {
     setApplying(true);
     setMessage("");
 
-    // ✅ CHECK IF ALREADY APPLIED
+    // check existing
     const { data: existing } = await supabase
       .from("applications")
       .select("id")
@@ -87,73 +76,49 @@ export default function JobDetail() {
       .maybeSingle();
 
     if (existing) {
-      setMessage("You already applied");
+      setMessage("Already applied");
       setApplying(false);
       return;
     }
 
-    // ✅ INSERT APPLICATION
+    // insert
     const { error } = await supabase
       .from("applications")
       .insert({
         job_id: id,
         user_id: user.id,
-        status: "pending"
+        status: "pending",
       });
 
     if (error) {
       setMessage(error.message);
     } else {
-      setMessage("Application submitted successfully");
+      setMessage("Application submitted");
     }
 
     setApplying(false);
   };
 
-  // ⏳ LOADING
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
-  // ❌ JOB NOT FOUND
-  if (!job) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <p>Job not found</p>
-      </div>
-    );
-  }
+  if (loading) return <p className="p-10">Loading...</p>;
+  if (!job) return <p className="p-10">Job not found</p>;
 
   return (
     <div className="min-h-screen px-6 py-20">
-
       <div className="max-w-3xl mx-auto">
 
-        {/* TITLE */}
-        <h1 className="text-3xl font-semibold">
-          {job.title}
-        </h1>
+        <h1 className="text-3xl font-semibold">{job.title}</h1>
 
-        {/* BASIC INFO */}
         <p className="text-gray-500 mt-2">
           {job.hospital_name} • {job.location}
         </p>
 
-        {/* SALARY */}
         <p className="mt-4">
           💰 {job.salary || "Not disclosed"}
         </p>
 
-        {/* DESCRIPTION */}
-        <p className="mt-6">
-          {job.description}
-        </p>
+        <p className="mt-6">{job.description}</p>
 
-        {/* 👨‍⚕️ DOCTOR APPLY */}
+        {/* DOCTOR ONLY */}
         {role === "doctor" && (
           <button
             onClick={applyJob}
@@ -164,14 +129,13 @@ export default function JobDetail() {
           </button>
         )}
 
-        {/* 🏥 ADMIN BLOCK */}
+        {/* ADMIN BLOCK */}
         {role === "admin" && (
           <p className="mt-6 text-gray-500">
             Admin cannot apply for jobs
           </p>
         )}
 
-        {/* MESSAGE */}
         {message && (
           <p className="mt-4 text-green-600">
             {message}
@@ -179,7 +143,6 @@ export default function JobDetail() {
         )}
 
       </div>
-
     </div>
   );
 }
