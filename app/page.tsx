@@ -33,45 +33,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">
 
-      {/* 🔥 NAVBAR */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-white/70 border-b">
-        <div className="flex justify-between items-center px-10 py-5">
-
-          <h1 className="text-xl font-semibold tracking-tight">
-            MedCareer
-          </h1>
-
-          <div className="space-x-6 text-sm text-gray-600">
-
-            {user ? (
-              <>
-                <a href="/jobs" className="hover:text-black transition">
-                  Explore Jobs
-                </a>
-
-                <a href="/post-job" className="hover:text-black transition">
-                  Post Job
-                </a>
-
-                <button
-                  onClick={async () => {
-                    await supabase.auth.signOut();
-                    window.location.reload();
-                  }}
-                  className="text-red-500 hover:opacity-70 transition"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <a href="/auth" className="hover:text-black transition">
-                Login / Register
-              </a>
-            )}
-
-          </div>
-        </div>
-      </header>
+      
 
       {/* 🚀 HERO */}
       <section className="text-center px-6 py-28">
