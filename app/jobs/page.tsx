@@ -73,11 +73,11 @@ export default function JobsPage() {
               </p>
 
               <a
-                href={`/jobs/${job.id}`}
-                className="mt-4 inline-block bg-black text-white px-4 py-2 rounded"
-              >
-                View Details
-              </a>
+  href={`/jobs/${job.id}`}
+  className="inline-block mt-3 text-blue-600 underline"
+>
+  View Details
+</a>
 
             </div>
 
