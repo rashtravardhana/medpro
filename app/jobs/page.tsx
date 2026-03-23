@@ -10,18 +10,17 @@ export default function JobsPage() {
 
   useEffect(() => {
 
-    // ✅ IMPORTANT: async function
     const fetchJobs = async () => {
 
-      const { data, error } = await supabase
+      const response = await supabase
         .from("jobs")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.log(error);
+      if (response.error) {
+        console.log(response.error);
       } else {
-        setJobs(data || []);
+        setJobs(response.data || []);
       }
 
       setLoading(false);
@@ -31,7 +30,6 @@ export default function JobsPage() {
 
   }, []);
 
-  // ⏳ LOADING
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -45,7 +43,7 @@ export default function JobsPage() {
 
       <div className="max-w-4xl mx-auto">
 
-        <h1 className="text-3xl font-semibold mb-8">
+        <h1 className="text-3xl font-semibold mb-10">
           Available Jobs
         </h1>
 
@@ -56,10 +54,12 @@ export default function JobsPage() {
         <div className="space-y-6">
 
           {jobs.map((job) => (
+
             <div
               key={job.id}
-              className="border p-6 rounded-lg"
+              className="border p-6 rounded-xl"
             >
+
               <h2 className="text-xl font-semibold">
                 {job.title}
               </h2>
@@ -68,21 +68,19 @@ export default function JobsPage() {
                 {job.hospital_name}
               </p>
 
-              <p>📍 {job.location}</p>
-
-              <p>💰 {job.salary || "Not disclosed"}</p>
-
-              <p className="mt-2 text-sm text-gray-600">
-                {job.description}
+              <p className="mt-2">
+                📍 {job.location}
               </p>
 
               <a
                 href={`/jobs/${job.id}`}
-                className="inline-block mt-4 bg-black text-white px-4 py-2 rounded"
+                className="mt-4 inline-block bg-black text-white px-4 py-2 rounded"
               >
                 View Details
               </a>
+
             </div>
+
           ))}
 
         </div>
