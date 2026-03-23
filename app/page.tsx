@@ -6,13 +6,28 @@ import supabase from "@/lib/supabase";
 export default function Home() {
 
   const [user, setUser] = useState<any>(null);
+  const [role, setRole] = useState<string | null>(null); // ✅ ADD ROLE
   const [loading, setLoading] = useState(true);
 
-  // 🔐 CHECK LOGIN
+  // 🔐 CHECK LOGIN + ROLE
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
-      setUser(data?.user || null);
+      const currentUser = data?.user;
+
+      setUser(currentUser || null);
+
+      // ✅ GET ROLE
+      if (currentUser) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", currentUser.id)
+          .single();
+
+        setRole(profile?.role || null);
+      }
+
       setLoading(false);
     };
 
@@ -33,8 +48,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">
 
-      
-
       {/* 🚀 HERO */}
       <section className="text-center px-6 py-28">
 
@@ -50,38 +63,43 @@ export default function Home() {
 
         <div className="mt-10 flex gap-6 justify-center flex-wrap">
 
-          {!user ? (
+          {/* NOT LOGGED IN */}
+          {!user && (
             <>
               <a
                 href="/auth"
-                className="px-8 py-3 bg-black text-white rounded-full hover:scale-105 transition"
+                className="px-8 py-3 bg-black text-white rounded-full"
               >
                 Get Started
               </a>
 
               <a
                 href="/auth"
-                className="px-8 py-3 border rounded-full hover:bg-gray-100 transition"
+                className="px-8 py-3 border rounded-full"
               >
                 Login
               </a>
             </>
-          ) : (
-            <>
-              <a
-                href="/jobs"
-                className="px-8 py-3 bg-black text-white rounded-full hover:scale-105 transition"
-              >
-                Explore Jobs
-              </a>
+          )}
 
-              <a
-                href="/post-job"
-                className="px-8 py-3 border rounded-full hover:bg-gray-100 transition"
-              >
-                Post Job
-              </a>
-            </>
+          {/* 👨‍⚕️ DOCTOR */}
+          {user && role === "doctor" && (
+            <a
+              href="/jobs"
+              className="px-8 py-3 bg-black text-white rounded-full"
+            >
+              Explore Jobs
+            </a>
+          )}
+
+          {/* 🏥 ADMIN */}
+          {user && role === "admin" && (
+            <a
+              href="/post-job"
+              className="px-8 py-3 border rounded-full"
+            >
+              Post Job
+            </a>
           )}
 
         </div>
@@ -93,95 +111,49 @@ export default function Home() {
         <div className="overflow-hidden rounded-2xl shadow-lg">
           <img
             src="https://images.unsplash.com/photo-1550831107-1553da8c8464?q=80&w=1600&auto=format&fit=crop"
-            alt="Doctor consulting patient"
-            className="w-full h-[420px] object-cover hover:scale-105 transition duration-700"
+            alt="Doctor"
+            className="w-full h-[420px] object-cover"
           />
         </div>
       </section>
 
-      {/* ✨ FEATURES (CLICKABLE NOW) */}
+      {/* ✨ FEATURES */}
       <section className="px-10 py-28">
         <div className="grid md:grid-cols-3 gap-12 text-center">
 
-          {/* DOCTORS */}
-          <a href="/doctors" className="group block cursor-pointer">
-            <div className="overflow-hidden rounded-xl shadow-sm">
-              <img
-                src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=800&auto=format&fit=crop"
-                className="h-48 w-full object-cover group-hover:scale-105 transition duration-500"
-                alt="Doctors"
-              />
-            </div>
+          <div>
             <h3 className="text-xl font-semibold mt-4">
               Built for Doctors
             </h3>
             <p className="text-gray-500 mt-2">
               Find jobs tailored to MBBS, BDS, BAMS and more.
             </p>
-          </a>
+          </div>
 
-          {/* HOSPITALS */}
-          <a href="/hospitals" className="group block cursor-pointer">
-            <div className="overflow-hidden rounded-xl shadow-sm">
-              <img
-                src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3?q=80&w=800&auto=format&fit=crop"
-                className="h-48 w-full object-cover group-hover:scale-105 transition duration-500"
-                alt="Hospital"
-              />
-            </div>
+          <div>
             <h3 className="text-xl font-semibold mt-4">
               For Hospitals
             </h3>
             <p className="text-gray-500 mt-2">
-              Hire qualified professionals quickly and efficiently.
+              Hire qualified professionals quickly.
             </p>
-          </a>
+          </div>
 
-          {/* MATCHING */}
-          <a href="/matching" className="group block cursor-pointer">
-            <div className="overflow-hidden rounded-xl shadow-sm">
-              <img
-                src="https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?q=80&w=800&auto=format&fit=crop"
-                className="h-48 w-full object-cover group-hover:scale-105 transition duration-500"
-                alt="Matching"
-              />
-            </div>
+          <div>
             <h3 className="text-xl font-semibold mt-4">
               Smart Matching
             </h3>
             <p className="text-gray-500 mt-2">
-              Jobs tailored based on your profession and preferences.
+              Jobs based on your profession.
             </p>
-          </a>
+          </div>
 
         </div>
       </section>
 
-      {/* ⚡ CTA */}
-      <section className="px-6 py-28 bg-black text-white text-center">
-
-        <h2 className="text-4xl md:text-5xl font-semibold">
-          Start Your Journey Today
-        </h2>
-
-        <p className="mt-4 text-gray-300">
-          Join MedCareer and unlock better opportunities in healthcare.
-        </p>
-
-        {!user && (
-          <a
-            href="/auth"
-            className="inline-block mt-8 px-8 py-3 bg-white text-black rounded-full hover:scale-105 transition"
-          >
-            Register / Login
-          </a>
-        )}
-
-      </section>
-
       {/* FOOTER */}
       <footer className="text-center text-sm text-gray-500 py-6 border-t">
-        © {new Date().getFullYear()} MedCareer. All rights reserved.
+        © {new Date().getFullYear()} MedCareer
       </footer>
 
     </div>
