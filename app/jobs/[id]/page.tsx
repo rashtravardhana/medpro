@@ -5,13 +5,11 @@ import { useParams } from "next/navigation";
 import supabase from "@/lib/supabase";
 
 export default function JobDetail() {
+
   const params = useParams();
 
-  // ✅ FORCE STRING (FIXES BUILD ERROR)
-  const rawId = params?.id;
-const id = Array.isArray(rawId) ? rawId[0] : rawId;
-
-if (!id) return null;
+  // ✅ SAFE ID
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
 
   const [job, setJob] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
@@ -20,46 +18,58 @@ if (!id) return null;
   const [applying, setApplying] = useState(false);
 
   useEffect(() => {
+
     if (!id) return;
 
     const fetchData = async () => {
-      const { data: jobData, error } = await supabase
+
+      // 🔹 FETCH JOB
+      const jobRes = await supabase
         .from("jobs")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (error) console.log(error);
+      if (jobRes.error) {
+        console.log(jobRes.error);
+      } else {
+        setJob(jobRes.data);
+      }
 
-      setJob(jobData);
+      // 🔹 FETCH USER ROLE
+      const userRes = await supabase.auth.getUser();
 
-      const { data } = await supabase.auth.getUser();
-
-      if (data?.user) {
-        const { data: profile } = await supabase
+      if (userRes.data?.user) {
+        const profileRes = await supabase
           .from("profiles")
           .select("role")
-          .eq("id", data.user.id)
+          .eq("id", userRes.data.user.id)
           .single();
 
-        setRole(profile?.role || null);
+        if (profileRes.data) {
+          setRole(profileRes.data.role);
+        }
       }
 
       setLoading(false);
     };
 
     fetchData();
+
   }, [id]);
 
+  // 🔹 APPLY FUNCTION
   const applyJob = async () => {
-    const { data } = await supabase.auth.getUser();
-    const user = data?.user;
+
+    const userRes = await supabase.auth.getUser();
+    const user = userRes.data?.user;
 
     if (!user) {
       window.location.href = "/auth";
       return;
     }
 
+    // ❌ ADMIN BLOCK
     if (role === "admin") {
       setMessage("Admins cannot apply");
       return;
@@ -68,20 +78,22 @@ if (!id) return null;
     setApplying(true);
     setMessage("");
 
-    const { data: existing } = await supabase
+    // 🔍 CHECK EXISTING
+    const existingRes = await supabase
       .from("applications")
       .select("id")
       .eq("job_id", id)
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (existing) {
-      setMessage("Already applied");
+    if (existingRes.data) {
+      setMessage("You already applied");
       setApplying(false);
       return;
     }
 
-    const { error } = await supabase
+    // 📥 INSERT
+    const insertRes = await supabase
       .from("applications")
       .insert({
         job_id: id,
@@ -89,23 +101,41 @@ if (!id) return null;
         status: "pending",
       });
 
-    if (error) {
-      setMessage(error.message);
+    if (insertRes.error) {
+      setMessage(insertRes.error.message);
     } else {
-      setMessage("Application submitted");
+      setMessage("Application submitted successfully");
     }
 
     setApplying(false);
   };
 
-  if (loading) return <p className="p-10">Loading...</p>;
-  if (!job) return <p className="p-10">Job not found</p>;
+  // ⏳ LOADING
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // ❌ NOT FOUND
+  if (!job) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p>Job not found</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen px-6 py-20">
+
       <div className="max-w-3xl mx-auto">
 
-        <h1 className="text-3xl font-semibold">{job.title}</h1>
+        <h1 className="text-3xl font-semibold">
+          {job.title}
+        </h1>
 
         <p className="text-gray-500 mt-2">
           {job.hospital_name} • {job.location}
@@ -115,8 +145,11 @@ if (!id) return null;
           💰 {job.salary || "Not disclosed"}
         </p>
 
-        <p className="mt-6">{job.description}</p>
+        <p className="mt-6">
+          {job.description}
+        </p>
 
+        {/* 👨‍⚕️ DOCTOR */}
         {role === "doctor" && (
           <button
             onClick={applyJob}
@@ -127,12 +160,14 @@ if (!id) return null;
           </button>
         )}
 
+        {/* 🏥 ADMIN */}
         {role === "admin" && (
           <p className="mt-6 text-gray-500">
             Admin cannot apply for jobs
           </p>
         )}
 
+        {/* MESSAGE */}
         {message && (
           <p className="mt-4 text-green-600">
             {message}
@@ -140,6 +175,7 @@ if (!id) return null;
         )}
 
       </div>
+
     </div>
   );
 }
