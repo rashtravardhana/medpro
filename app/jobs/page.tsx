@@ -7,42 +7,37 @@ export default function JobsPage() {
 
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
 
-    const init = async () => {
+    // ✅ IMPORTANT: async function
+    const fetchJobs = async () => {
 
-      // 🔐 GET USER
-      const { data } = await supabase.auth.getUser();
-      const user = data?.user;
-
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-
-        setRole(profile?.role || null);
-      }
-
-      // 📦 GET JOBS
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("jobs")
         .select("*")
         .order("created_at", { ascending: false });
 
-      setJobs(data || []);
+      if (error) {
+        console.log(error);
+      } else {
+        setJobs(data || []);
+      }
+
       setLoading(false);
     };
 
-    init();
+    fetchJobs();
 
   }, []);
 
+  // ⏳ LOADING
   if (loading) {
-    return <p className="p-10">Loading...</p>;
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p>Loading jobs...</p>
+      </div>
+    );
   }
 
   return (
@@ -50,38 +45,43 @@ export default function JobsPage() {
 
       <div className="max-w-4xl mx-auto">
 
-        <h1 className="text-3xl mb-10">Available Jobs</h1>
+        <h1 className="text-3xl font-semibold mb-8">
+          Available Jobs
+        </h1>
+
+        {jobs.length === 0 && (
+          <p>No jobs available</p>
+        )}
 
         <div className="space-y-6">
 
           {jobs.map((job) => (
-            <div key={job.id} className="glass p-6">
+            <div
+              key={job.id}
+              className="border p-6 rounded-lg"
+            >
+              <h2 className="text-xl font-semibold">
+                {job.title}
+              </h2>
 
-              <h2 className="text-xl font-semibold">{job.title}</h2>
-              <p>{job.hospital_name}</p>
+              <p className="text-gray-500">
+                {job.hospital_name}
+              </p>
+
               <p>📍 {job.location}</p>
-              <p>💰 {job.salary}</p>
 
-              {/* 👨‍⚕️ DOCTOR ONLY */}
-              {role === "doctor" && (
-                <a
-                  href={`/jobs/${job.id}`}
-                  className="mt-4 inline-block btn-primary"
-                >
-                  View & Apply
-                </a>
-              )}
+              <p>💰 {job.salary || "Not disclosed"}</p>
 
-              {/* 🏥 ADMIN ONLY */}
-              {role === "admin" && (
-                <a
-                  href={`/jobs/${job.id}`}
-                  className="mt-4 inline-block btn-secondary"
-                >
-                  View Details
-                </a>
-              )}
+              <p className="mt-2 text-sm text-gray-600">
+                {job.description}
+              </p>
 
+              <a
+                href={`/jobs/${job.id}`}
+                className="inline-block mt-4 bg-black text-white px-4 py-2 rounded"
+              >
+                View Details
+              </a>
             </div>
           ))}
 
