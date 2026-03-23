@@ -8,9 +8,10 @@ export default function JobDetail() {
   const params = useParams();
 
   // ✅ FORCE STRING (FIXES BUILD ERROR)
-  const id = Array.isArray(params?.id)
-    ? params.id[0]
-    : (params?.id as string);
+  const rawId = params?.id;
+const id = Array.isArray(rawId) ? rawId[0] : rawId;
+
+if (!id) return null;
 
   const [job, setJob] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
