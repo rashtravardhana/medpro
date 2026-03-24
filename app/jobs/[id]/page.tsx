@@ -208,7 +208,7 @@ export default function JobDetail() {
         )}
 
         {/* ✅ APPLY BUTTON (FINAL FIX) */}
-        {role && role !== "admin" && (
+        {role !== "admin" && (
           <button
             onClick={applyJob}
             disabled={applying}
