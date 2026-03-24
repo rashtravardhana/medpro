@@ -11,6 +11,7 @@ export default function JobDetail() {
 
   const [job, setJob] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
+  const [profession, setProfession] = useState<string | null>(null); // ✅ NEW
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [applying, setApplying] = useState(false);
@@ -22,26 +23,27 @@ export default function JobDetail() {
 
     const fetchData = async () => {
 
-      // JOB
-      const jobRes = await supabase
+      // 🔹 JOB
+      const { data: jobData } = await supabase
         .from("jobs")
         .select("*")
         .eq("id", id)
         .single();
 
-      setJob(jobRes.data);
+      setJob(jobData);
 
-      // USER ROLE
-      const userRes = await supabase.auth.getUser();
+      // 🔹 USER
+      const { data: userData } = await supabase.auth.getUser();
 
-      if (userRes.data?.user) {
-        const profileRes = await supabase
+      if (userData?.user) {
+        const { data: profile } = await supabase
           .from("profiles")
-          .select("role")
-          .eq("id", userRes.data.user.id)
+          .select("role, profession")
+          .eq("id", userData.user.id)
           .single();
 
-        setRole(profileRes.data?.role?.toLowerCase().trim() || null);
+        setRole(profile?.role?.toLowerCase().trim() || null);
+        setProfession(profile?.profession || null);
       }
 
       setLoading(false);
@@ -54,16 +56,14 @@ export default function JobDetail() {
   // 🔹 APPLY JOB
   const applyJob = async () => {
 
-    const userRes = await supabase.auth.getUser();
-    const user = userRes.data?.user;
+    const { data } = await supabase.auth.getUser();
+    const user = data?.user;
 
-    // ❌ NOT LOGGED IN
     if (!user) {
       window.location.href = "/auth";
       return;
     }
 
-    // ❌ ADMIN BLOCK
     if (role === "admin") {
       setMessage("Admins cannot apply");
       return;
@@ -72,22 +72,22 @@ export default function JobDetail() {
     setApplying(true);
     setMessage("");
 
-    // CHECK EXISTING
-    const existing = await supabase
+    // 🔍 CHECK EXISTING
+    const { data: existing } = await supabase
       .from("applications")
       .select("id")
       .eq("job_id", id)
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (existing.data) {
+    if (existing) {
       setMessage("You already applied");
       setApplying(false);
       return;
     }
 
-    // INSERT
-    const insert = await supabase
+    // 📥 INSERT
+    const { error } = await supabase
       .from("applications")
       .insert({
         job_id: id,
@@ -95,8 +95,8 @@ export default function JobDetail() {
         status: "pending",
       });
 
-    if (insert.error) {
-      setMessage(insert.error.message);
+    if (error) {
+      setMessage(error.message);
     } else {
       setMessage("Application submitted ✅");
     }
@@ -127,17 +127,17 @@ export default function JobDetail() {
 
       <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl p-10">
 
-        {/* 🔹 TITLE */}
-        <h1 className="text-4xl font-semibold tracking-tight">
+        {/* TITLE */}
+        <h1 className="text-4xl font-semibold">
           {job.title}
         </h1>
 
-        {/* 🔹 BASIC INFO */}
+        {/* BASIC INFO */}
         <p className="text-gray-500 mt-2 text-lg">
           {job.hospital_name} • {job.location}
         </p>
 
-        {/* 🔹 INFO GRID */}
+        {/* INFO GRID */}
         <div className="grid md:grid-cols-3 gap-4 mt-8">
 
           <div className="p-4 border rounded-xl">
@@ -163,7 +163,7 @@ export default function JobDetail() {
 
         </div>
 
-        {/* 🔹 PROFESSION */}
+        {/* PROFESSION */}
         {job.profession && (
           <div className="mt-6">
             <p className="text-sm text-gray-400">Profession Required</p>
@@ -171,15 +171,15 @@ export default function JobDetail() {
           </div>
         )}
 
-        {/* 🔹 DESCRIPTION */}
+        {/* DESCRIPTION */}
         <div className="mt-10">
           <h2 className="text-xl font-semibold mb-2">Overview</h2>
-          <p className="text-gray-700 leading-relaxed">
+          <p className="text-gray-700">
             {job.description}
           </p>
         </div>
 
-        {/* 🔹 RESPONSIBILITIES */}
+        {/* RESPONSIBILITIES */}
         {job.responsibilities && (
           <div className="mt-8">
             <h2 className="text-xl font-semibold mb-2">
@@ -193,7 +193,7 @@ export default function JobDetail() {
           </div>
         )}
 
-        {/* 🔹 REQUIREMENTS */}
+        {/* REQUIREMENTS */}
         {job.requirements && (
           <div className="mt-8">
             <h2 className="text-xl font-semibold mb-2">
@@ -207,8 +207,8 @@ export default function JobDetail() {
           </div>
         )}
 
-        {/* 🔹 APPLY BUTTON */}
-        {role === "doctor" && (
+        {/* ✅ APPLY BUTTON (FINAL FIX) */}
+        {role && role !== "admin" && (
           <button
             onClick={applyJob}
             disabled={applying}
@@ -218,14 +218,14 @@ export default function JobDetail() {
           </button>
         )}
 
-        {/* 🔹 ADMIN BLOCK */}
+        {/* ADMIN BLOCK */}
         {role === "admin" && (
           <p className="mt-10 text-center text-gray-500">
             Admin cannot apply for this job
           </p>
         )}
 
-        {/* 🔹 MESSAGE */}
+        {/* MESSAGE */}
         {message && (
           <p className="mt-4 text-green-600 text-center">
             {message}
