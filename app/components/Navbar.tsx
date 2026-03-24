@@ -29,7 +29,7 @@ export default function Navbar() {
         .eq("id", currentUser.id)
         .single();
 
-      setRole(profile?.role || null);
+      setRole(profile?.role?.toLowerCase().trim() || null);
     };
 
     getUserAndRole();
