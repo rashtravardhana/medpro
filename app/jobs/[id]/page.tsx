@@ -11,7 +11,7 @@ export default function JobDetail() {
 
   const [job, setJob] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
-  const [profession, setProfession] = useState<string | null>(null); // ✅ NEW
+  const [profession, setProfession] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [applying, setApplying] = useState(false);
@@ -23,27 +23,41 @@ export default function JobDetail() {
 
     const fetchData = async () => {
 
-      // 🔹 JOB
-      const { data: jobData } = await supabase
+      // 🔹 GET JOB
+      const { data: jobData, error: jobError } = await supabase
         .from("jobs")
         .select("*")
         .eq("id", id)
         .single();
 
-      setJob(jobData);
+      if (jobError) {
+        console.log("JOB ERROR:", jobError);
+      } else {
+        setJob(jobData);
+      }
 
-      // 🔹 USER
+      // 🔹 GET USER
       const { data: userData } = await supabase.auth.getUser();
 
       if (userData?.user) {
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("role, profession")
           .eq("id", userData.user.id)
           .single();
 
-        setRole(profile?.role?.toLowerCase().trim() || null);
-        setProfession(profile?.profession || null);
+        if (profileError) {
+          console.log("PROFILE ERROR:", profileError);
+        } else {
+          // ✅ SAFE ROLE FIX
+          const fixedRole = profile?.role?.toLowerCase().trim() || null;
+
+          setRole(fixedRole);
+          setProfession(profile?.profession || null);
+
+          console.log("ROLE:", fixedRole);
+          console.log("PROFESSION:", profile?.profession);
+        }
       }
 
       setLoading(false);
@@ -121,6 +135,13 @@ export default function JobDetail() {
       </div>
     );
   }
+
+  // ✅ FINAL APPLY LOGIC (SMART)
+  const canApply =
+    role === "doctor" &&
+    profession &&
+    job.profession &&
+    profession.toLowerCase().trim() === job.profession.toLowerCase().trim();
 
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-16">
@@ -207,8 +228,8 @@ export default function JobDetail() {
           </div>
         )}
 
-        {/* ✅ APPLY BUTTON (FINAL FIX) */}
-        {role !== "admin" && (
+        {/* ✅ APPLY BUTTON (FINAL LOGIC) */}
+        {canApply && (
           <button
             onClick={applyJob}
             disabled={applying}
@@ -218,10 +239,17 @@ export default function JobDetail() {
           </button>
         )}
 
-        {/* ADMIN BLOCK */}
+        {/* ❌ NOT ELIGIBLE */}
+        {!canApply && role === "doctor" && (
+          <p className="mt-10 text-center text-gray-500">
+            You are not eligible for this job
+          </p>
+        )}
+
+        {/* 🏥 ADMIN */}
         {role === "admin" && (
           <p className="mt-10 text-center text-gray-500">
-            Admin cannot apply for this job
+            Admin cannot apply for jobs
           </p>
         )}
 
