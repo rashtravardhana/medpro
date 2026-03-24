@@ -8,28 +8,46 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ ADD USER + ROLE (important for future logic)
+  const [role, setRole] = useState<string | null>(null);
+
   useEffect(() => {
 
-    const fetchJobs = async () => {
+    const fetchData = async () => {
 
-      const response = await supabase
+      // 🔹 GET USER ROLE
+      const userRes = await supabase.auth.getUser();
+
+      if (userRes.data?.user) {
+        const profileRes = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userRes.data.user.id)
+          .single();
+
+        setRole(profileRes.data?.role?.toLowerCase().trim() || null);
+      }
+
+      // 🔹 GET JOBS
+      const jobRes = await supabase
         .from("jobs")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (response.error) {
-        console.log(response.error);
+      if (jobRes.error) {
+        console.log(jobRes.error);
       } else {
-        setJobs(response.data || []);
+        setJobs(jobRes.data || []);
       }
 
       setLoading(false);
     };
 
-    fetchJobs();
+    fetchData();
 
   }, []);
 
+  // ⏳ LOADING
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -72,12 +90,16 @@ export default function JobsPage() {
                 📍 {job.location}
               </p>
 
+              <p className="mt-2 text-sm text-gray-600">
+                💰 {job.salary || "Not disclosed"}
+              </p>
+
               <a
-  href={`/jobs/${job.id}`}
-  className="inline-block mt-3 text-blue-600 underline"
->
-  View Details
-</a>
+                href={`/jobs/${job.id}`}
+                className="inline-block mt-3 text-blue-600 underline"
+              >
+                View Details
+              </a>
 
             </div>
 
