@@ -11,7 +11,6 @@ export default function JobDetail() {
 
   const [job, setJob] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
-  const [profession, setProfession] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [applying, setApplying] = useState(false);
@@ -23,41 +22,27 @@ export default function JobDetail() {
 
     const fetchData = async () => {
 
-      // 🔹 GET JOB
-      const { data: jobData, error: jobError } = await supabase
+      // ✅ GET JOB
+      const { data: jobData } = await supabase
         .from("jobs")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (jobError) {
-        console.log("JOB ERROR:", jobError);
-      } else {
-        setJob(jobData);
-      }
+      setJob(jobData);
 
-      // 🔹 GET USER
+      // ✅ GET USER ROLE
       const { data: userData } = await supabase.auth.getUser();
 
       if (userData?.user) {
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from("profiles")
-          .select("role, profession")
+          .select("role")
           .eq("id", userData.user.id)
           .single();
 
-        if (profileError) {
-          console.log("PROFILE ERROR:", profileError);
-        } else {
-          // ✅ SAFE ROLE FIX
-          const fixedRole = profile?.role?.toLowerCase().trim() || null;
-
-          setRole(fixedRole);
-          setProfession(profile?.profession || null);
-
-          console.log("ROLE:", fixedRole);
-          console.log("PROFESSION:", profile?.profession);
-        }
+        // ✅ FIX ROLE FORMAT
+        setRole(profile?.role?.toLowerCase().trim() || null);
       }
 
       setLoading(false);
@@ -67,7 +52,7 @@ export default function JobDetail() {
 
   }, [id]);
 
-  // 🔹 APPLY JOB
+  // 🔹 APPLY FUNCTION
   const applyJob = async () => {
 
     const { data } = await supabase.auth.getUser();
@@ -86,7 +71,7 @@ export default function JobDetail() {
     setApplying(true);
     setMessage("");
 
-    // 🔍 CHECK EXISTING
+    // 🔍 CHECK IF ALREADY APPLIED
     const { data: existing } = await supabase
       .from("applications")
       .select("id")
@@ -100,7 +85,7 @@ export default function JobDetail() {
       return;
     }
 
-    // 📥 INSERT
+    // 📥 APPLY
     const { error } = await supabase
       .from("applications")
       .insert({
@@ -136,20 +121,13 @@ export default function JobDetail() {
     );
   }
 
-  // ✅ FINAL APPLY LOGIC (SMART)
-  const canApply =
-    role === "doctor" &&
-    profession &&
-    job.profession &&
-    profession.toLowerCase().trim() === job.profession.toLowerCase().trim();
-
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-16">
 
       <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl p-10">
 
         {/* TITLE */}
-        <h1 className="text-4xl font-semibold">
+        <h1 className="text-4xl font-semibold tracking-tight">
           {job.title}
         </h1>
 
@@ -195,7 +173,7 @@ export default function JobDetail() {
         {/* DESCRIPTION */}
         <div className="mt-10">
           <h2 className="text-xl font-semibold mb-2">Overview</h2>
-          <p className="text-gray-700">
+          <p className="text-gray-700 leading-relaxed">
             {job.description}
           </p>
         </div>
@@ -228,25 +206,18 @@ export default function JobDetail() {
           </div>
         )}
 
-        {/* ✅ APPLY BUTTON (FINAL LOGIC) */}
-        {canApply && (
+        {/* ✅ APPLY BUTTON (FIXED) */}
+        {role === "doctor" && (
           <button
             onClick={applyJob}
             disabled={applying}
-            className="mt-10 w-full bg-black text-white py-3 rounded-xl disabled:opacity-50"
+            className="mt-10 w-full bg-black text-white py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
           >
             {applying ? "Applying..." : "Apply Now"}
           </button>
         )}
 
-        {/* ❌ NOT ELIGIBLE */}
-        {!canApply && role === "doctor" && (
-          <p className="mt-10 text-center text-gray-500">
-            You are not eligible for this job
-          </p>
-        )}
-
-        {/* 🏥 ADMIN */}
+        {/* ADMIN */}
         {role === "admin" && (
           <p className="mt-10 text-center text-gray-500">
             Admin cannot apply for jobs
