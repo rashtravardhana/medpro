@@ -41,7 +41,7 @@ export default function JobDetail() {
           .eq("id", userRes.data.user.id)
           .single();
 
-        setRole(profileRes.data?.role || null);
+        setRole(profileRes.data?.role?.toLowerCase().trim() || null);
       }
 
       setLoading(false);
