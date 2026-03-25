@@ -22,7 +22,6 @@ export default function ApplicantsPage() {
 
     setLoading(true);
 
-    // ✅ SIMPLE QUERY (NO JOIN = NO ERROR)
     const { data, error } = await supabase
       .from("applications")
       .select("*")
@@ -30,11 +29,11 @@ export default function ApplicantsPage() {
 
     if (error) {
       console.log("APPLICATION ERROR:", error);
-      setLoading(false); // ✅ IMPORTANT FIX
+      setLoading(false);
       return;
     }
 
-    // 🔥 FETCH PROFILE MANUALLY
+    // 🔥 FETCH PROFILE
     const updated = await Promise.all(
       (data || []).map(async (app) => {
 
@@ -104,18 +103,30 @@ export default function ApplicantsPage() {
             className="border p-6 rounded-lg"
           >
 
+            {/* 👨‍⚕️ NAME */}
             <p className="text-lg font-semibold">
               Doctor: {app.profile?.name || "Unknown"}
             </p>
 
+            {/* ROLE */}
             <p className="text-neutral-500 mt-1">
               Role: {app.profile?.role || "N/A"}
             </p>
 
+            {/* STATUS */}
             <p className="mt-2">
               Status: {app.status}
             </p>
 
+            {/* ✅ VIEW PROFILE BUTTON */}
+            <a
+              href={`/admin/doctor/${app.user_id}`}
+              className="inline-block mt-3 text-blue-600 underline"
+            >
+              View Profile
+            </a>
+
+            {/* ACTION BUTTONS */}
             <div className="mt-4 space-x-4">
 
               <button
