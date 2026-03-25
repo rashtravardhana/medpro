@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import supabase from "@/lib/supabase";
+import { useRouter } from "next/navigation"; // ✅ ADD
 
 export default function Navbar() {
 
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
+  const router = useRouter(); // ✅ ADD
 
   useEffect(() => {
 
@@ -35,6 +37,15 @@ export default function Navbar() {
     getUserAndRole();
 
   }, []);
+
+  // 🔥 LOGOUT FUNCTION (FIXED)
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+
+    setUser(null); // optional instant UI update
+
+    router.push("/auth"); // ✅ REDIRECT TO LOGIN
+  };
 
   return (
     <header className="sticky top-0 z-50 glass soft-shadow">
@@ -73,11 +84,9 @@ export default function Navbar() {
                 </>
               )}
 
+              {/* ✅ FIXED LOGOUT */}
               <button
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  window.location.reload();
-                }}
+                onClick={handleLogout}
                 className="text-red-500"
               >
                 Logout
