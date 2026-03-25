@@ -8,17 +8,17 @@ export default function UserDashboard() {
 
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("User");
 
   const router = useRouter();
 
   useEffect(() => {
 
-    const checkUserAndFetch = async () => {
+    const init = async () => {
 
       // 🔐 GET USER
-      const { data } = await supabase.auth.getUser();
-      const user = data?.user;
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
 
       if (!user) {
         router.push("/auth");
@@ -40,13 +40,13 @@ export default function UserDashboard() {
 
       setUserName(profile?.name || "User");
 
-      // 🚫 ADMIN REDIRECT
+      // 🚫 ADMIN → REDIRECT
       if (role === "admin") {
         router.push("/admin/dashboard");
         return;
       }
 
-      // 📥 FETCH APPLICATIONS + JOB DATA
+      // 📥 FETCH APPLICATIONS
       const { data: apps, error: appsError } = await supabase
         .from("applications")
         .select(`
@@ -71,11 +71,11 @@ export default function UserDashboard() {
       setLoading(false);
     };
 
-    checkUserAndFetch();
+    init();
 
   }, [router]);
 
-  // ⏳ LOADING UI
+  // ⏳ LOADING
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
@@ -93,7 +93,7 @@ export default function UserDashboard() {
 
         {/* 👤 HEADER */}
         <div className="mb-12 text-center">
-          <h1 className="text-4xl font-semibold tracking-tight">
+          <h1 className="text-4xl font-semibold">
             Welcome, {userName}
           </h1>
           <p className="text-gray-500 mt-2">
@@ -101,7 +101,7 @@ export default function UserDashboard() {
           </p>
         </div>
 
-        {/* ❌ EMPTY STATE */}
+        {/* ❌ NO APPLICATION */}
         {applications.length === 0 ? (
           <div className="text-center bg-white p-10 rounded-2xl shadow-sm">
             <p className="text-gray-500 text-lg">
@@ -110,14 +110,13 @@ export default function UserDashboard() {
 
             <a
               href="/jobs"
-              className="inline-block mt-6 px-6 py-3 bg-black text-white rounded-full hover:scale-105 transition"
+              className="inline-block mt-6 px-6 py-3 bg-black text-white rounded-full"
             >
               Explore Jobs
             </a>
           </div>
         ) : (
 
-          /* ✅ APPLICATION LIST */
           <div className="space-y-6">
 
             {applications.map((app) => (
@@ -127,7 +126,7 @@ export default function UserDashboard() {
                 className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition"
               >
 
-                {/* JOB TITLE */}
+                {/* TITLE */}
                 <h2 className="text-xl font-semibold">
                   {app.jobs?.title || "Untitled Job"}
                 </h2>
@@ -147,18 +146,20 @@ export default function UserDashboard() {
                 <div className="mt-4 flex justify-between items-center">
 
                   <span className="text-sm text-gray-500">
-                    Applied on {new Date(app.created_at).toLocaleDateString()}
+                    Applied on{" "}
+                    {new Date(app.created_at).toLocaleDateString()}
                   </span>
 
-                  <span className={`text-sm font-semibold px-3 py-1 rounded-full
+                  <span
+                    className={`text-sm font-semibold px-3 py-1 rounded-full
                     ${
                       app.status === "pending"
                         ? "bg-yellow-100 text-yellow-700"
                         : app.status === "accepted"
                         ? "bg-green-100 text-green-700"
                         : "bg-red-100 text-red-700"
-                    }
-                  `}>
+                    }`}
+                  >
                     {app.status}
                   </span>
 
