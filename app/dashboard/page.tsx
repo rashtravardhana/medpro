@@ -2,33 +2,28 @@
 
 import { useEffect, useState } from "react";
 import supabase from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import useAuth from "@/lib/useAuth"; // ✅ ADD
 
 export default function UserDashboard() {
 
+  // ✅ PROTECTED ROUTE
+  const { user, loading } = useAuth("doctor");
+
   const [applications, setApplications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
   const [userName, setUserName] = useState<string>("User");
 
-  const router = useRouter();
-
+  // 🔹 FETCH DATA (ONLY AFTER AUTH)
   useEffect(() => {
 
-    const init = async () => {
+    if (!user) return;
 
-      // 🔐 GET USER
-      const { data: userData } = await supabase.auth.getUser();
-      const user = userData?.user;
+    const fetchData = async () => {
 
-      if (!user) {
-        router.push("/auth");
-        return;
-      }
-
-      // 🔐 GET PROFILE
+      // 🔹 GET PROFILE
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role, name")
+        .select("name")
         .eq("id", user.id)
         .single();
 
@@ -36,17 +31,9 @@ export default function UserDashboard() {
         console.log("PROFILE ERROR:", profileError);
       }
 
-      const role = profile?.role?.toLowerCase().trim();
-
       setUserName(profile?.name || "User");
 
-      // 🚫 ADMIN → REDIRECT
-      if (role === "admin") {
-        router.push("/admin/dashboard");
-        return;
-      }
-
-      // 📥 FETCH APPLICATIONS
+      // 🔹 FETCH APPLICATIONS
       const { data: apps, error: appsError } = await supabase
         .from("applications")
         .select(`
@@ -68,15 +55,24 @@ export default function UserDashboard() {
       }
 
       setApplications(apps || []);
-      setLoading(false);
+      setDataLoading(false);
     };
 
-    init();
+    fetchData();
 
-  }, [router]);
+  }, [user]);
 
-  // ⏳ LOADING
+  // ⏳ AUTH LOADING
   if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p>Checking authentication...</p>
+      </div>
+    );
+  }
+
+  // ⏳ DATA LOADING
+  if (dataLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
         <p className="text-gray-400 animate-pulse text-lg">
