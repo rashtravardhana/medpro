@@ -2,25 +2,26 @@
 
 import { useEffect, useState } from "react";
 import supabase from "@/lib/supabase";
-import useAuth from "@/lib/useAuth"; // ✅ ADD
+import useAuth from "@/lib/useAuth";
 
 export default function UserDashboard() {
 
-  // ✅ PROTECTED ROUTE
+  // ✅ AUTH
   const { user, loading } = useAuth("doctor");
 
   const [applications, setApplications] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [userName, setUserName] = useState<string>("User");
+  const [uploading, setUploading] = useState(false); // ✅ NEW
 
-  // 🔹 FETCH DATA (ONLY AFTER AUTH)
+  // 🔹 FETCH DATA
   useEffect(() => {
 
     if (!user) return;
 
     const fetchData = async () => {
 
-      // 🔹 GET PROFILE
+      // 🔹 PROFILE
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("name")
@@ -33,7 +34,7 @@ export default function UserDashboard() {
 
       setUserName(profile?.name || "User");
 
-      // 🔹 FETCH APPLICATIONS
+      // 🔹 APPLICATIONS
       const { data: apps, error: appsError } = await supabase
         .from("applications")
         .select(`
@@ -61,6 +62,43 @@ export default function UserDashboard() {
     fetchData();
 
   }, [user]);
+
+  // 🔹 RESUME UPLOAD FUNCTION
+  const handleUploadResume = async (e: any) => {
+
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploading(true);
+
+    const fileName = `${user.id}.pdf`;
+
+    // 📤 UPLOAD
+    const { error } = await supabase.storage
+      .from("resumes")
+      .upload(fileName, file, { upsert: true });
+
+    if (error) {
+      alert(error.message);
+      setUploading(false);
+      return;
+    }
+
+    // 🔗 GET URL
+    const { data } = supabase.storage
+      .from("resumes")
+      .getPublicUrl(fileName);
+
+    // 💾 SAVE IN DB
+    await supabase
+      .from("profiles")
+      .update({ resume_url: data.publicUrl })
+      .eq("id", user.id);
+
+    alert("Resume uploaded ✅");
+
+    setUploading(false);
+  };
 
   // ⏳ AUTH LOADING
   if (loading) {
@@ -95,6 +133,26 @@ export default function UserDashboard() {
           <p className="text-gray-500 mt-2">
             Track your job applications
           </p>
+        </div>
+
+        {/* 📄 RESUME UPLOAD */}
+        <div className="mb-10 bg-white p-6 rounded-2xl shadow-sm text-center">
+
+          <h2 className="text-lg font-semibold mb-3">
+            Upload Resume (PDF)
+          </h2>
+
+          <input
+            type="file"
+            accept=".pdf"
+            onChange={handleUploadResume}
+            className="mb-3"
+          />
+
+          {uploading && (
+            <p className="text-gray-500">Uploading...</p>
+          )}
+
         </div>
 
         {/* ❌ NO APPLICATION */}
