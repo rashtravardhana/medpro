@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "@/lib/supabase";
 
@@ -8,42 +8,60 @@ export default function AuthPage() {
 
   const router = useRouter();
 
+  // 🔁 MODE SWITCH
+  const [isLogin, setIsLogin] = useState(true);
+
+  // FORM STATE
   const [name, setName] = useState("");
   const [role, setRole] = useState("doctor");
   const [profession, setProfession] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔐 AUTO REDIRECT IF ALREADY LOGGED IN
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
+  // 🔐 LOGIN
+  const handleLogin = async () => {
 
-      if (data?.user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", data.user.id)
-          .single();
+    setLoading(true);
+    setMessage("");
 
-        if (profile?.role === "admin") {
-          router.push("/admin/dashboard");
-        } else {
-          router.push("/jobs");
-        }
-      }
-    };
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
-    checkUser();
-  }, []);
+    if (error) {
+      setMessage(error.message);
+      setLoading(false);
+      return;
+    }
 
-  // 🔐 REGISTER
+    // 🔹 GET ROLE
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+
+    const role = profile?.role?.toLowerCase().trim();
+
+    // 🔹 REDIRECT
+    if (role === "admin") {
+      router.push("/admin/dashboard");
+    } else {
+      router.push("/jobs");
+    }
+
+    setLoading(false);
+  };
+
+  // 📝 REGISTER
   const handleRegister = async () => {
 
-    setMessage("");
     setLoading(true);
+    setMessage("");
 
     if (!name || !email || !password) {
       setMessage("Please fill all required fields");
@@ -70,124 +88,68 @@ export default function AuthPage() {
     }
 
     if (data.user) {
+      // SAVE PROFILE
+      await supabase.from("profiles").insert({
+        id: data.user.id,
+        name,
+        role,
+        profession: role === "doctor" ? profession : null
+      });
 
-      // ✅ CHECK IF PROFILE EXISTS (IMPORTANT FIX)
-      const { data: existingProfile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", data.user.id)
-        .maybeSingle();
-
-      if (!existingProfile) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: data.user.id,
-            name,
-            role,
-            profession: role === "doctor" ? profession : null
-          });
-
-        if (profileError) {
-          setMessage(profileError.message);
-          setLoading(false);
-          return;
-        }
-      }
-
-      setMessage("✅ Registration successful. Now login.");
-
-      // RESET
-      setName("");
-      setEmail("");
-      setPassword("");
-      setProfession("");
-    }
-
-    setLoading(false);
-  };
-
-  // 🔐 LOGIN
-  const handleLogin = async () => {
-
-    setMessage("");
-    setLoading(true);
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (error) {
-      setMessage(error.message);
-      setLoading(false);
-      return;
-    }
-
-    // GET ROLE
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", data.user.id)
-      .single();
-
-    // REDIRECT
-    if (profile?.role === "admin") {
-      router.push("/admin/dashboard");
-    } else {
-      router.push("/jobs");
+      setMessage("✅ Registered successfully. Please login.");
+      setIsLogin(true); // 👉 switch to login
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
 
-      <div className="w-full max-w-md p-8 glass soft-shadow fade-up">
+      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow">
 
         <h1 className="text-3xl font-semibold mb-6 text-center">
-          Login / Register
+          {isLogin ? "Login" : "Register"}
         </h1>
 
-        {/* NAME */}
-        <input
-          type="text"
-          placeholder="Full Name"
-          className="w-full border p-3 rounded mb-4"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        {/* 📝 REGISTER ONLY FIELDS */}
+        {!isLogin && (
+          <>
+            <input
+              type="text"
+              placeholder="Full Name"
+              className="w-full border p-3 rounded mb-4"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
 
-        {/* ROLE */}
-        <select
-          className="w-full border p-3 rounded mb-4"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        >
-          <option value="doctor">Doctor</option>
-          <option value="admin">Hospital Admin</option>
-        </select>
+            <select
+              className="w-full border p-3 rounded mb-4"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
+              <option value="doctor">Doctor</option>
+              <option value="admin">Hospital Admin</option>
+            </select>
 
-        {/* 👨‍⚕️ ONLY DOCTOR */}
-        {role === "doctor" && (
-          <select
-            className="w-full border p-3 rounded mb-4"
-            value={profession}
-            onChange={(e) => setProfession(e.target.value)}
-          >
-            <option value="">Select Profession</option>
-            <option value="MBBS">MBBS</option>
-            <option value="BDS">BDS</option>
-            <option value="BAMS">BAMS</option>
-            <option value="BHMS">BHMS</option>
-            <option value="BUMS">BUMS</option>
-            <option value="Nursing">Nursing</option>
-            <option value="Allied Healthcare">Allied Healthcare</option>
-          </select>
+            {role === "doctor" && (
+              <select
+                className="w-full border p-3 rounded mb-4"
+                value={profession}
+                onChange={(e) => setProfession(e.target.value)}
+              >
+                <option value="">Select Profession</option>
+                <option value="MBBS">MBBS</option>
+                <option value="BDS">BDS</option>
+                <option value="BAMS">BAMS</option>
+                <option value="BHMS">BHMS</option>
+                <option value="Nursing">Nursing</option>
+              </select>
+            )}
+          </>
         )}
 
-        {/* EMAIL */}
+        {/* 🔐 COMMON FIELDS */}
         <input
           type="email"
           placeholder="Email"
@@ -196,7 +158,6 @@ export default function AuthPage() {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        {/* PASSWORD */}
         <input
           type="password"
           placeholder="Password"
@@ -205,25 +166,40 @@ export default function AuthPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        {/* LOGIN */}
-        <button
-          onClick={handleLogin}
-          disabled={loading}
-          className="w-full btn-primary mb-3 disabled:opacity-50"
-        >
-          {loading ? "Please wait..." : "Login"}
-        </button>
+        {/* 🔘 BUTTON */}
+        {isLogin ? (
+          <button
+            onClick={handleLogin}
+            className="w-full bg-black text-white py-3 rounded-full"
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
+        ) : (
+          <button
+            onClick={handleRegister}
+            className="w-full bg-black text-white py-3 rounded-full"
+            disabled={loading}
+          >
+            {loading ? "Registering..." : "Register"}
+          </button>
+        )}
 
-        {/* REGISTER */}
-        <button
-          onClick={handleRegister}
-          disabled={loading}
-          className="w-full btn-secondary disabled:opacity-50"
-        >
-          {loading ? "Please wait..." : "Register"}
-        </button>
+        {/* 🔁 SWITCH */}
+        <p className="mt-6 text-center text-sm text-gray-500">
 
-        {/* MESSAGE */}
+          {isLogin ? "Don't have an account?" : "Already have an account?"}
+
+          <button
+            onClick={() => setIsLogin(!isLogin)}
+            className="ml-2 text-black font-medium"
+          >
+            {isLogin ? "Register" : "Login"}
+          </button>
+
+        </p>
+
+        {/* ❗ MESSAGE */}
         {message && (
           <p className="mt-4 text-center text-red-500">
             {message}
