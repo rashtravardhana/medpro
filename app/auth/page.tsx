@@ -39,17 +39,25 @@ export default function AuthPage() {
     }
 
     // 🔹 GET ROLE
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", data.user.id)
       .single();
 
+    if (profileError) {
+      setMessage("Error fetching user profile");
+      setLoading(false);
+      return;
+    }
+
     const role = profile?.role?.toLowerCase().trim();
 
-    // 🔹 REDIRECT
+    // ✅ FIXED REDIRECT
     if (role === "admin") {
       router.push("/admin/dashboard");
+    } else if (role === "doctor") {
+      router.push("/dashboard"); // ✅ THIS FIXES YOUR ISSUE
     } else {
       router.push("/jobs");
     }
@@ -89,15 +97,21 @@ export default function AuthPage() {
 
     if (data.user) {
       // SAVE PROFILE
-      await supabase.from("profiles").insert({
+      const { error: insertError } = await supabase.from("profiles").insert({
         id: data.user.id,
         name,
-        role,
+        role: role.toLowerCase().trim(),
         profession: role === "doctor" ? profession : null
       });
 
+      if (insertError) {
+        setMessage(insertError.message);
+        setLoading(false);
+        return;
+      }
+
       setMessage("✅ Registered successfully. Please login.");
-      setIsLogin(true); // 👉 switch to login
+      setIsLogin(true);
     }
 
     setLoading(false);
@@ -112,7 +126,7 @@ export default function AuthPage() {
           {isLogin ? "Login" : "Register"}
         </h1>
 
-        {/* 📝 REGISTER ONLY FIELDS */}
+        {/* 📝 REGISTER ONLY */}
         {!isLogin && (
           <>
             <input
@@ -187,7 +201,6 @@ export default function AuthPage() {
 
         {/* 🔁 SWITCH */}
         <p className="mt-6 text-center text-sm text-gray-500">
-
           {isLogin ? "Don't have an account?" : "Already have an account?"}
 
           <button
@@ -196,7 +209,6 @@ export default function AuthPage() {
           >
             {isLogin ? "Register" : "Login"}
           </button>
-
         </p>
 
         {/* ❗ MESSAGE */}
