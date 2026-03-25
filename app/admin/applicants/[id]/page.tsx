@@ -18,36 +18,48 @@ export default function ApplicantsPage() {
     }
   }, [jobId]);
 
-  // FETCH APPLICATIONS WITH DOCTOR PROFILE
   const fetchApplications = async () => {
 
+    setLoading(true);
+
+    // ✅ SIMPLE QUERY (NO JOIN = NO ERROR)
     const { data, error } = await supabase
       .from("applications")
-      .select(`
-        id,
-        status,
-        profiles (
-          name,
-          role
-        )
-      `)
+      .select("*")
       .eq("job_id", jobId);
 
     if (error) {
-      console.log(error);
+      console.log("APPLICATION ERROR:", error);
+      setLoading(false); // ✅ IMPORTANT FIX
       return;
     }
 
-    setApplications(data || []);
+    // 🔥 FETCH PROFILE MANUALLY
+    const updated = await Promise.all(
+      (data || []).map(async (app) => {
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("name, role")
+          .eq("id", app.user_id)
+          .maybeSingle();
+
+        return {
+          ...app,
+          profile
+        };
+      })
+    );
+
+    setApplications(updated);
     setLoading(false);
   };
 
-  // UPDATE APPLICATION STATUS
   const updateStatus = async (id: string, status: string) => {
 
     const { error } = await supabase
       .from("applications")
-      .update({ status: status })
+      .update({ status })
       .eq("id", id);
 
     if (error) {
@@ -93,11 +105,11 @@ export default function ApplicantsPage() {
           >
 
             <p className="text-lg font-semibold">
-              Doctor: {app.profiles?.name}
+              Doctor: {app.profile?.name || "Unknown"}
             </p>
 
             <p className="text-neutral-500 mt-1">
-              Role: {app.profiles?.role}
+              Role: {app.profile?.role || "N/A"}
             </p>
 
             <p className="mt-2">
