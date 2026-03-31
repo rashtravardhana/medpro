@@ -61,42 +61,33 @@ export default function Home() {
 
         <div className="mt-10 flex gap-6 justify-center flex-wrap">
 
-          {/* NOT LOGGED IN */}
+          {/* ❌ NOT LOGGED IN → ONLY ONE BUTTON */}
           {!user && (
-            <>
-              <a
-                href="/auth"
-                className="px-8 py-3 bg-black text-white rounded-full hover:scale-105 transition"
-              >
-                Get Started
-              </a>
-
-              <a
-                href="/auth"
-                className="px-8 py-3 border rounded-full hover:bg-gray-100"
-              >
-                Login
-              </a>
-            </>
+            <a
+              href="/auth"
+              className="px-10 py-4 bg-black text-white rounded-full text-lg hover:scale-105 transition"
+            >
+              Get Started
+            </a>
           )}
 
           {/* 👨‍⚕️ DOCTOR */}
           {user && role === "doctor" && (
             <a
-              href="/jobs"
-              className="px-8 py-3 bg-black text-white rounded-full hover:scale-105 transition"
+              href="/dashboard"
+              className="px-10 py-4 bg-black text-white rounded-full text-lg hover:scale-105 transition"
             >
-              Explore Jobs
+              Go to Dashboard
             </a>
           )}
 
           {/* 🏥 ADMIN */}
           {user && role === "admin" && (
             <a
-              href="/post-job"
-              className="px-8 py-3 border rounded-full hover:bg-gray-100"
+              href="/admin/dashboard"
+              className="px-10 py-4 bg-black text-white rounded-full text-lg hover:scale-105 transition"
             >
-              Post Job
+              Go to Admin Dashboard
             </a>
           )}
 
@@ -219,19 +210,19 @@ export default function Home() {
 
           {user && role === "doctor" && (
             <a
-              href="/jobs"
+              href="/dashboard"
               className="bg-white text-black px-8 py-3 rounded-full"
             >
-              Explore Jobs
+              Go to Dashboard
             </a>
           )}
 
           {user && role === "admin" && (
             <a
-              href="/post-job"
+              href="/admin/dashboard"
               className="bg-white text-black px-8 py-3 rounded-full"
             >
-              Post a Job
+              Go to Admin Dashboard
             </a>
           )}
 
