@@ -21,11 +21,23 @@ export default function ApplicationsPage() {
         return;
       }
 
-      // ✅ FETCH ONLY USER APPLICATIONS
+      // ✅ FETCH APPLICATIONS + JOB DETAILS (IMPORTANT FIX)
       const { data: apps, error } = await supabase
         .from("applications")
-        .select("*")
-        .eq("user_id", currentUser.id);
+        .select(`
+          id,
+          status,
+          created_at,
+          jobs (
+            id,
+            title,
+            hospital_name,
+            location,
+            salary
+          )
+        `)
+        .eq("user_id", currentUser.id)
+        .order("created_at", { ascending: false });
 
       if (error) {
         console.log("Error:", error.message);
@@ -39,7 +51,7 @@ export default function ApplicationsPage() {
 
   }, []);
 
-  // ✅ LOADING SCREEN (NO GAP ISSUE)
+  // ⏳ LOADING
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
@@ -49,7 +61,7 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white px-6 py-20">
+    <div className="min-h-screen bg-gray-50 px-6 py-20">
 
       <div className="max-w-2xl mx-auto">
 
@@ -62,16 +74,66 @@ export default function ApplicationsPage() {
             No applications yet.
           </p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
+
             {applications.map((app) => (
+
               <div
                 key={app.id}
-                className="border p-5 rounded-lg shadow-sm"
+                className="bg-white p-6 rounded-xl shadow-sm border"
               >
-                <p><strong>Job ID:</strong> {app.job_id}</p>
-                <p><strong>Status:</strong> {app.status}</p>
+
+                {/* ✅ JOB TITLE */}
+                <h2 className="text-xl font-semibold">
+                  {app.jobs?.title || "Untitled Job"}
+                </h2>
+
+                {/* 🏥 HOSPITAL */}
+                <p className="text-gray-500">
+                  {app.jobs?.hospital_name}
+                </p>
+
+                {/* 📍 DETAILS */}
+                <div className="mt-2 text-sm text-gray-600 space-y-1">
+                  <p>📍 {app.jobs?.location}</p>
+                  <p>💰 {app.jobs?.salary || "Not disclosed"}</p>
+                </div>
+
+                {/* 📅 STATUS */}
+                <div className="mt-4 flex justify-between items-center">
+
+                  <span className="text-sm text-gray-500">
+                    Applied on{" "}
+                    {new Date(app.created_at).toLocaleDateString()}
+                  </span>
+
+                  <span
+                    className={`text-sm font-semibold px-3 py-1 rounded-full
+                    ${
+                      app.status === "pending"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : app.status === "accepted"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {app.status}
+                  </span>
+
+                </div>
+
+                {/* 🔗 VIEW JOB (optional) */}
+                <a
+                  href={`/jobs/${app.jobs?.id}`}
+                  className="inline-block mt-4 text-blue-600 underline"
+                >
+                  View Job
+                </a>
+
               </div>
+
             ))}
+
           </div>
         )}
 
