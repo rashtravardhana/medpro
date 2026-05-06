@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import supabase from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
@@ -9,13 +9,14 @@ export default function Navbar() {
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
 
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  // 🔐 GET USER
   useEffect(() => {
-
     const getUserAndRole = async () => {
-
       const { data } = await supabase.auth.getUser();
       const currentUser = data?.user;
 
@@ -26,7 +27,6 @@ export default function Navbar() {
 
       setUser(currentUser);
 
-      // 🔥 GET ROLE + AVATAR
       const { data: profile } = await supabase
         .from("profiles")
         .select("role, avatar_url")
@@ -38,7 +38,18 @@ export default function Navbar() {
     };
 
     getUserAndRole();
+  }, []);
 
+  // 🔥 CLOSE DROPDOWN ON OUTSIDE CLICK
+  useEffect(() => {
+    const handleClickOutside = (e: any) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // 🔥 LOGOUT
@@ -49,7 +60,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 glass soft-shadow bg-white">
+    <header className="sticky top-0 z-50 bg-white border-b">
 
       <div className="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
 
@@ -58,11 +69,14 @@ export default function Navbar() {
           MedCareer
         </a>
 
-        <div className="flex gap-6 text-sm text-gray-600 items-center">
+        <div className="flex gap-6 text-sm text-gray-700 items-center">
 
           {/* NOT LOGGED IN */}
           {!user && (
-            <a href="/auth" className="btn-primary">
+            <a
+              href="/auth"
+              className="px-5 py-2 bg-black text-white rounded-full hover:opacity-90"
+            >
               Login
             </a>
           )}
@@ -70,40 +84,72 @@ export default function Navbar() {
           {/* LOGGED IN */}
           {user && (
             <>
-              <a href="/jobs">Jobs</a>
+              <a href="/jobs" className="hover:text-black">
+                Jobs
+              </a>
 
               {/* 👨‍⚕️ DOCTOR */}
               {role === "doctor" && (
                 <>
-                  <a href="/dashboard">Dashboard</a>
-                  <a href="/applications">Applications</a>
+                  <a href="/dashboard" className="hover:text-black">
+                    Dashboard
+                  </a>
+                  <a href="/applications" className="hover:text-black">
+                    Applications
+                  </a>
                 </>
               )}
 
               {/* 🏥 ADMIN */}
               {role === "admin" && (
                 <>
-                  <a href="/admin/dashboard">Admin</a>
-                  <a href="/post-job">Post Job</a>
+                  <a href="/admin/dashboard" className="hover:text-black">
+                    Admin
+                  </a>
+                  <a href="/post-job" className="hover:text-black">
+                    Post Job
+                  </a>
                 </>
               )}
 
-              {/* ✅ PROFILE (NEW) */}
-              <a href="/profile">
+              {/* 👤 AVATAR DROPDOWN */}
+              <div className="relative" ref={dropdownRef}>
+
                 <img
                   src={avatarUrl || "https://via.placeholder.com/40"}
                   alt="avatar"
-                  className="w-10 h-10 rounded-full object-cover border"
+                  onClick={() => setOpen(!open)}
+                  className="w-10 h-10 rounded-full object-cover border cursor-pointer hover:scale-105 transition"
                 />
-              </a>
 
-              {/* LOGOUT */}
-              <button
-                onClick={handleLogout}
-                className="text-red-500"
-              >
-                Logout
-              </button>
+                {/* DROPDOWN */}
+                {open && (
+                  <div className="absolute right-0 mt-3 w-44 bg-white border rounded-lg shadow-lg overflow-hidden">
+
+                    <a
+                      href="/profile"
+                      className="block px-4 py-3 text-sm hover:bg-gray-100"
+                    >
+                      Profile
+                    </a>
+
+                    <a
+                      href={role === "admin" ? "/admin/dashboard" : "/dashboard"}
+                      className="block px-4 py-3 text-sm hover:bg-gray-100"
+                    >
+                      Dashboard
+                    </a>
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100"
+                    >
+                      Logout
+                    </button>
+
+                  </div>
+                )}
+              </div>
             </>
           )}
 
