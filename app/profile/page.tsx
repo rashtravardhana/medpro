@@ -1,339 +1,146 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
+import supabase from "@/lib/supabase"
 
-import supabase from "@/lib/supabase";
+export default function ProfilePage(){
 
-export default function ProfilePage() {
+  const [file,setFile] = useState<File | null>(null)
+  const [loading,setLoading] = useState(false)
+  const [resumeUrl,setResumeUrl] = useState("")
+  const [message,setMessage] = useState("")
 
-  const [user, setUser] = useState<any>(null);
-
-  const [name, setName] = useState("");
-
-  const [profession, setProfession] = useState("");
-
-  const [avatarUrl, setAvatarUrl] = useState("");
-
-  const [resumeFile, setResumeFile] = useState<File | null>(null);
-
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-
-  const [loading, setLoading] = useState(false);
-
-  const [message, setMessage] = useState("");
-
-  // 🔐 LOAD USER + PROFILE
-
+  // 🔐 Load existing resume
   useEffect(() => {
-
     const getProfile = async () => {
+      const { data:{user} } = await supabase.auth.getUser()
 
-      const { data } = await supabase.auth.getUser();
+      if(!user) return
 
-      const currentUser = data?.user;
-
-      if (!currentUser) {
-
-        window.location.href = "/auth";
-
-        return;
-
-      }
-
-      setUser(currentUser);
-
-      const { data: profile } = await supabase
-
+      const { data } = await supabase
         .from("profiles")
+        .select("resume_url")
+        .eq("id",user.id)
+        .single()
 
-        .select("name, profession, avatar_url")
-
-        .eq("id", currentUser.id)
-
-        .single();
-
-      if (profile) {
-
-        setName(profile.name || "");
-
-        setProfession(profile.profession || "");
-
-        setAvatarUrl(profile.avatar_url || "");
-
+      if(data?.resume_url){
+        setResumeUrl(data.resume_url)
       }
+    }
 
-    };
-
-    getProfile();
-
-  }, []);
-
-  // 📄 UPLOAD RESUME
+    getProfile()
+  }, [])
 
   const uploadResume = async () => {
 
-    if (!resumeFile || !user) {
+    setLoading(true)
+    setMessage("")
 
-      alert("Select resume");
+    const { data:{user} } = await supabase.auth.getUser()
 
-      return;
-
+    if(!user){
+      setMessage("Login required")
+      setLoading(false)
+      return
     }
 
-    const filePath = `${user.id}/${Date.now()}-${resumeFile.name}`;
+    if(!file){
+      setMessage("Please select a file")
+      setLoading(false)
+      return
+    }
+
+    // ✅ FILE TYPE CHECK
+    if(file.type !== "application/pdf"){
+      setMessage("Only PDF allowed")
+      setLoading(false)
+      return
+    }
+
+    const filePath = `${user.id}/${Date.now()}-${file.name}`
 
     const { error } = await supabase.storage
-
       .from("resumes")
+      .upload(filePath,file)
 
-      .upload(filePath, resumeFile);
-
-    if (error) {
-
-      alert(error.message);
-
-      return;
-
+    if(error){
+      setMessage(error.message)
+      setLoading(false)
+      return
     }
 
     const { data } = supabase.storage
-
       .from("resumes")
+      .getPublicUrl(filePath)
 
-      .getPublicUrl(filePath);
-
-    await supabase
-
-      .from("profiles")
-
-      .update({ resume_url: data.publicUrl })
-
-      .eq("id", user.id);
-
-    alert("✅ Resume uploaded");
-
-  };
-
-  // 🖼 UPLOAD AVATAR
-
-  const uploadAvatar = async () => {
-
-    if (!avatarFile || !user) return avatarUrl;
-
-    const fileExt = avatarFile.name.split(".").pop();
-
-    const fileName = `${user.id}.${fileExt}`;
-
-    const { error } = await supabase.storage
-
-      .from("avatars")
-
-      .upload(fileName, avatarFile, {
-
-        upsert: true,
-
-      });
-
-    if (error) {
-
-      console.log(error);
-
-      return avatarUrl;
-
+    if(!data?.publicUrl){
+      setMessage("Error getting file URL")
+      setLoading(false)
+      return
     }
 
-    const { data } = supabase.storage
-
-      .from("avatars")
-
-      .getPublicUrl(fileName);
-
-    return data.publicUrl;
-
-  };
-
-  // 💾 SAVE PROFILE
-
-  const handleSave = async () => {
-
-    setLoading(true);
-
-    setMessage("Saving...");
-
-    let finalAvatar = avatarUrl;
-
-    if (avatarFile) {
-
-      const uploaded = await uploadAvatar();
-
-      if (uploaded) finalAvatar = uploaded;
-
-    }
-
-    const { error } = await supabase
-
+    const { error: updateError } = await supabase
       .from("profiles")
-
       .update({
-
-        name,
-
-        profession,
-
-        avatar_url: finalAvatar
-
+        resume_url:data.publicUrl
       })
+      .eq("id",user.id)
 
-      .eq("id", user.id);
-
-    if (error) {
-
-      setMessage("❌ Error saving");
-
-    } else {
-
-      setMessage("✅ Profile updated");
-
+    if(updateError){
+      setMessage(updateError.message)
+      setLoading(false)
+      return
     }
 
-    setLoading(false);
+    setResumeUrl(data.publicUrl)
+    setMessage("✅ Resume uploaded successfully")
+    setLoading(false)
+  }
 
-  };
+  return(
 
-  return (
+    <div className="min-h-screen p-10 bg-gray-50">
 
-    <div className="min-h-screen px-6 py-20 bg-gray-50">
+      <div className="max-w-xl mx-auto bg-white p-8 rounded-xl shadow">
 
-      <div className="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow">
-
-        <h1 className="text-2xl font-semibold mb-6 text-center">
-
-          My Profile
-
+        <h1 className="text-2xl font-semibold mb-6">
+          Upload Resume
         </h1>
 
-        {/* 🖼 AVATAR */}
-
-        <div className="flex flex-col items-center mb-6">
-
-          {avatarUrl && (
-
-            <img
-
-              src={avatarUrl}
-
-              className="w-24 h-24 rounded-full object-cover mb-4"
-
-            />
-
-          )}
-
-          <input
-
-            type="file"
-
-            onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
-
-          />
-
-        </div>
-
-        {/* NAME */}
+        {/* 📄 VIEW RESUME */}
+        {resumeUrl && (
+          <a
+            href={resumeUrl}
+            target="_blank"
+            className="block mb-4 text-blue-600 underline"
+          >
+            View Current Resume
+          </a>
+        )}
 
         <input
-
-          type="text"
-
-          placeholder="Full Name"
-
-          className="w-full border p-3 rounded mb-4"
-
-          value={name}
-
-          onChange={(e) => setName(e.target.value)}
-
+          type="file"
+          accept=".pdf"
+          onChange={(e)=>setFile(e.target.files?.[0] || null)}
         />
-
-        {/* PROFESSION */}
-
-        <input
-
-          type="text"
-
-          placeholder="Profession"
-
-          className="w-full border p-3 rounded mb-6"
-
-          value={profession}
-
-          onChange={(e) => setProfession(e.target.value)}
-
-        />
-
-        {/* SAVE BUTTON */}
 
         <button
-
-          onClick={handleSave}
-
-          className="w-full bg-black text-white py-3 rounded-full mb-6"
-
+          onClick={uploadResume}
+          className="mt-4 bg-black text-white px-6 py-2 rounded"
         >
-
-          {loading ? "Saving..." : "Save Profile"}
-
+          {loading ? "Uploading..." : "Upload Resume"}
         </button>
 
-        {/* 📄 RESUME */}
-
-        <div className="border-t pt-6">
-
-          <h2 className="text-lg font-semibold mb-3">
-
-            Upload Resume
-
-          </h2>
-
-          <input
-
-            type="file"
-
-            accept=".pdf"
-
-            onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
-
-          />
-
-          <button
-
-            onClick={uploadResume}
-
-            className="mt-4 bg-black text-white px-6 py-2 rounded"
-
-          >
-
-            Upload Resume
-
-          </button>
-
-        </div>
-
-        {/* MESSAGE */}
-
         {message && (
-
-          <p className="mt-4 text-center text-sm text-gray-600">
-
+          <p className="mt-4 text-sm text-gray-600">
             {message}
-
           </p>
-
         )}
 
       </div>
 
     </div>
 
-  );
+  )
 
 }
