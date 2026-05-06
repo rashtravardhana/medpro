@@ -12,7 +12,14 @@ export default function UserDashboard() {
   const [applications, setApplications] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [userName, setUserName] = useState<string>("User");
-  const [uploading, setUploading] = useState(false); // ✅ NEW
+  const [uploading, setUploading] = useState(false);
+
+  const [stats, setStats] = useState({
+    total: 0,
+    accepted: 0,
+    pending: 0,
+    rejected: 0
+  });
 
   // 🔹 FETCH DATA
   useEffect(() => {
@@ -21,21 +28,17 @@ export default function UserDashboard() {
 
     const fetchData = async () => {
 
-      // 🔹 PROFILE
-      const { data: profile, error: profileError } = await supabase
+      // 👤 PROFILE
+      const { data: profile } = await supabase
         .from("profiles")
         .select("name")
         .eq("id", user.id)
         .single();
 
-      if (profileError) {
-        console.log("PROFILE ERROR:", profileError);
-      }
-
       setUserName(profile?.name || "User");
 
-      // 🔹 APPLICATIONS
-      const { data: apps, error: appsError } = await supabase
+      // 📄 APPLICATIONS
+      const { data: apps } = await supabase
         .from("applications")
         .select(`
           id,
@@ -51,11 +54,17 @@ export default function UserDashboard() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (appsError) {
-        console.log("APPLICATION ERROR:", appsError);
-      }
+      const list = apps || [];
+      setApplications(list);
 
-      setApplications(apps || []);
+      // 📊 STATS
+      setStats({
+        total: list.length,
+        accepted: list.filter(a => a.status === "accepted").length,
+        pending: list.filter(a => a.status === "pending").length,
+        rejected: list.filter(a => a.status === "rejected").length
+      });
+
       setDataLoading(false);
     };
 
@@ -63,7 +72,7 @@ export default function UserDashboard() {
 
   }, [user]);
 
-  // 🔹 RESUME UPLOAD FUNCTION
+  // 🔹 RESUME UPLOAD
   const handleUploadResume = async (e: any) => {
 
     const file = e.target.files?.[0];
@@ -73,7 +82,6 @@ export default function UserDashboard() {
 
     const fileName = `${user.id}.pdf`;
 
-    // 📤 UPLOAD
     const { error } = await supabase.storage
       .from("resumes")
       .upload(fileName, file, { upsert: true });
@@ -84,20 +92,24 @@ export default function UserDashboard() {
       return;
     }
 
-    // 🔗 GET URL
     const { data } = supabase.storage
       .from("resumes")
       .getPublicUrl(fileName);
 
-    // 💾 SAVE IN DB
     await supabase
       .from("profiles")
       .update({ resume_url: data.publicUrl })
       .eq("id", user.id);
 
     alert("Resume uploaded ✅");
-
     setUploading(false);
+  };
+
+  // 🎨 STATUS STYLE
+  const getStatusStyle = (status: string) => {
+    if (status === "accepted") return "bg-green-100 text-green-700";
+    if (status === "rejected") return "bg-red-100 text-red-700";
+    return "bg-yellow-100 text-yellow-700";
   };
 
   // ⏳ AUTH LOADING
@@ -121,12 +133,12 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-20">
+    <div className="min-h-screen bg-gray-50 px-6 py-16">
 
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
 
-        {/* 👤 HEADER */}
-        <div className="mb-12 text-center">
+        {/* 👋 HEADER */}
+        <div className="mb-10 text-center">
           <h1 className="text-4xl font-semibold">
             Welcome, {userName}
           </h1>
@@ -135,8 +147,39 @@ export default function UserDashboard() {
           </p>
         </div>
 
-        {/* 📄 RESUME UPLOAD */}
-        <div className="mb-10 bg-white p-6 rounded-2xl shadow-sm text-center">
+        {/* 📊 STATS */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+
+          <div className="bg-white p-6 rounded-xl shadow text-center">
+            <p className="text-gray-500 text-sm">Total</p>
+            <h2 className="text-2xl font-semibold">{stats.total}</h2>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow text-center">
+            <p className="text-gray-500 text-sm">Accepted</p>
+            <h2 className="text-2xl font-semibold text-green-600">
+              {stats.accepted}
+            </h2>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow text-center">
+            <p className="text-gray-500 text-sm">Pending</p>
+            <h2 className="text-2xl font-semibold text-yellow-600">
+              {stats.pending}
+            </h2>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow text-center">
+            <p className="text-gray-500 text-sm">Rejected</p>
+            <h2 className="text-2xl font-semibold text-red-600">
+              {stats.rejected}
+            </h2>
+          </div>
+
+        </div>
+
+        {/* 📄 RESUME */}
+        <div className="mb-12 bg-white p-6 rounded-xl shadow text-center">
 
           <h2 className="text-lg font-semibold mb-3">
             Upload Resume (PDF)
@@ -146,18 +189,17 @@ export default function UserDashboard() {
             type="file"
             accept=".pdf"
             onChange={handleUploadResume}
-            className="mb-3"
           />
 
           {uploading && (
-            <p className="text-gray-500">Uploading...</p>
+            <p className="text-gray-500 mt-2">Uploading...</p>
           )}
 
         </div>
 
-        {/* ❌ NO APPLICATION */}
+        {/* ❌ EMPTY */}
         {applications.length === 0 ? (
-          <div className="text-center bg-white p-10 rounded-2xl shadow-sm">
+          <div className="text-center bg-white p-10 rounded-xl shadow">
             <p className="text-gray-500 text-lg">
               You haven’t applied to any jobs yet.
             </p>
@@ -177,42 +219,31 @@ export default function UserDashboard() {
 
               <div
                 key={app.id}
-                className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition"
+                className="bg-white p-6 rounded-xl shadow hover:shadow-md transition"
               >
 
-                {/* TITLE */}
                 <h2 className="text-xl font-semibold">
                   {app.jobs?.title || "Untitled Job"}
                 </h2>
 
-                {/* HOSPITAL */}
-                <p className="text-gray-500">
+                <p className="text-gray-500 mt-1">
                   {app.jobs?.hospital_name}
                 </p>
 
-                {/* DETAILS */}
                 <div className="mt-3 text-sm text-gray-600 space-y-1">
                   <p>📍 {app.jobs?.location}</p>
                   <p>💰 {app.jobs?.salary || "Not disclosed"}</p>
                 </div>
 
-                {/* STATUS */}
                 <div className="mt-4 flex justify-between items-center">
 
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-gray-400">
                     Applied on{" "}
                     {new Date(app.created_at).toLocaleDateString()}
                   </span>
 
                   <span
-                    className={`text-sm font-semibold px-3 py-1 rounded-full
-                    ${
-                      app.status === "pending"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : app.status === "accepted"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
+                    className={`px-4 py-1 rounded-full text-sm font-medium ${getStatusStyle(app.status)}`}
                   >
                     {app.status}
                   </span>
