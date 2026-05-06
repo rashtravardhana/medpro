@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import supabase from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function Navbar() {
 
@@ -13,6 +13,7 @@ export default function Navbar() {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname(); // ✅ ACTIVE LINK
 
   // 🔐 GET USER
   useEffect(() => {
@@ -40,7 +41,7 @@ export default function Navbar() {
     getUserAndRole();
   }, []);
 
-  // 🔥 CLOSE DROPDOWN ON OUTSIDE CLICK
+  // 🔥 CLOSE DROPDOWN
   useEffect(() => {
     const handleClickOutside = (e: any) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -59,17 +60,23 @@ export default function Navbar() {
     router.push("/auth");
   };
 
+  // 🎯 ACTIVE LINK STYLE
+  const linkClass = (path: string) =>
+    `hover:text-black ${
+      pathname === path ? "text-black font-semibold" : "text-gray-600"
+    }`;
+
   return (
-    <header className="sticky top-0 z-50 bg-white border-b">
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur border-b">
 
       <div className="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
 
         {/* LOGO */}
-        <a href="/" className="text-lg font-semibold">
+        <a href="/" className="text-lg font-semibold tracking-tight">
           MedCareer
         </a>
 
-        <div className="flex gap-6 text-sm text-gray-700 items-center">
+        <div className="flex gap-6 text-sm items-center">
 
           {/* NOT LOGGED IN */}
           {!user && (
@@ -84,17 +91,17 @@ export default function Navbar() {
           {/* LOGGED IN */}
           {user && (
             <>
-              <a href="/jobs" className="hover:text-black">
+              <a href="/jobs" className={linkClass("/jobs")}>
                 Jobs
               </a>
 
               {/* 👨‍⚕️ DOCTOR */}
               {role === "doctor" && (
                 <>
-                  <a href="/dashboard" className="hover:text-black">
+                  <a href="/dashboard" className={linkClass("/dashboard")}>
                     Dashboard
                   </a>
-                  <a href="/applications" className="hover:text-black">
+                  <a href="/applications" className={linkClass("/applications")}>
                     Applications
                   </a>
                 </>
@@ -103,28 +110,46 @@ export default function Navbar() {
               {/* 🏥 ADMIN */}
               {role === "admin" && (
                 <>
-                  <a href="/admin/dashboard" className="hover:text-black">
+                  <a href="/admin/dashboard" className={linkClass("/admin/dashboard")}>
                     Admin
                   </a>
-                  <a href="/post-job" className="hover:text-black">
+                  <a href="/admin/analytics" className={linkClass("/admin/analytics")}>
+                    Analytics
+                  </a>
+                  <a href="/post-job" className={linkClass("/post-job")}>
                     Post Job
                   </a>
                 </>
               )}
 
-              {/* 👤 AVATAR DROPDOWN */}
+              {/* 👤 AVATAR */}
               <div className="relative" ref={dropdownRef}>
 
-                <img
-                  src={avatarUrl || "https://via.placeholder.com/40"}
-                  alt="avatar"
-                  onClick={() => setOpen(!open)}
-                  className="w-10 h-10 rounded-full object-cover border cursor-pointer hover:scale-105 transition"
-                />
+                {/* Avatar / Fallback */}
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="avatar"
+                    onClick={() => setOpen(!open)}
+                    className="w-10 h-10 rounded-full object-cover border cursor-pointer hover:scale-105 transition"
+                  />
+                ) : (
+                  <div
+                    onClick={() => setOpen(!open)}
+                    className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center cursor-pointer"
+                  >
+                    {user.email?.[0]?.toUpperCase()}
+                  </div>
+                )}
 
                 {/* DROPDOWN */}
                 {open && (
-                  <div className="absolute right-0 mt-3 w-44 bg-white border rounded-lg shadow-lg overflow-hidden">
+                  <div className="absolute right-0 mt-3 w-52 bg-white border rounded-xl shadow-lg overflow-hidden animate-fadeIn">
+
+                    {/* USER INFO */}
+                    <div className="px-4 py-3 border-b text-xs text-gray-500">
+                      {user.email}
+                    </div>
 
                     <a
                       href="/profile"
@@ -149,6 +174,7 @@ export default function Navbar() {
 
                   </div>
                 )}
+
               </div>
             </>
           )}
