@@ -13,9 +13,7 @@ export default function ApplicantsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (jobId) {
-      fetchApplications();
-    }
+    if (jobId) fetchApplications();
   }, [jobId]);
 
   const fetchApplications = async () => {
@@ -33,13 +31,13 @@ export default function ApplicantsPage() {
       return;
     }
 
-    // 🔥 FETCH PROFILE
+    // 🔥 FETCH FULL PROFILE DATA
     const updated = await Promise.all(
       (data || []).map(async (app) => {
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("name, role")
+          .select("name, role, profession, resume_url, avatar_url")
           .eq("id", app.user_id)
           .maybeSingle();
 
@@ -75,14 +73,16 @@ export default function ApplicantsPage() {
 
   if (loading) {
     return (
-      <div className="p-10">
-        <p>Loading applicants...</p>
+      <div className="p-10 text-center">
+        <p className="text-gray-500 animate-pulse">
+          Loading applicants...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="p-10">
+    <div className="p-10 max-w-4xl mx-auto">
 
       <h1 className="text-3xl font-semibold mb-8">
         Job Applicants
@@ -100,45 +100,95 @@ export default function ApplicantsPage() {
 
           <div
             key={app.id}
-            className="border p-6 rounded-lg"
+            className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-md transition"
           >
 
-            {/* 👨‍⚕️ NAME */}
-            <p className="text-lg font-semibold">
-              Doctor: {app.profile?.name || "Unknown"}
-            </p>
+            {/* 👤 PROFILE HEADER */}
+            <div className="flex items-center gap-4">
 
-            {/* ROLE */}
-            <p className="text-neutral-500 mt-1">
-              Role: {app.profile?.role || "N/A"}
-            </p>
+              {/* AVATAR */}
+              {app.profile?.avatar_url ? (
+                <img
+                  src={app.profile.avatar_url}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                  👤
+                </div>
+              )}
 
-            {/* STATUS */}
-            <p className="mt-2">
-              Status: {app.status}
-            </p>
+              {/* NAME + PROFESSION */}
+              <div>
+                <p className="text-lg font-semibold">
+                  {app.profile?.name || "Unknown"}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {app.profile?.profession || "No profession"}
+                </p>
+              </div>
 
-            {/* ✅ VIEW PROFILE BUTTON */}
+            </div>
+
+            {/* 📊 STATUS */}
+            <div className="mt-4 flex justify-between items-center">
+
+              <span className="text-sm text-gray-500">
+                Applied on{" "}
+                {new Date(app.created_at).toLocaleDateString()}
+              </span>
+
+              <span
+                className={`text-sm font-semibold px-3 py-1 rounded-full
+                ${
+                  app.status === "pending"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : app.status === "accepted"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {app.status}
+              </span>
+
+            </div>
+
+            {/* 📄 RESUME */}
+            {app.profile?.resume_url ? (
+              <a
+                href={app.profile.resume_url}
+                target="_blank"
+                className="inline-block mt-4 text-blue-600 underline"
+              >
+                View Resume
+              </a>
+            ) : (
+              <p className="text-gray-400 mt-4">
+                No resume uploaded
+              </p>
+            )}
+
+            {/* 🔗 PROFILE LINK */}
             <a
               href={`/admin/doctor/${app.user_id}`}
-              className="inline-block mt-3 text-blue-600 underline"
+              className="block mt-2 text-indigo-600 underline"
             >
-              View Profile
+              View Full Profile
             </a>
 
-            {/* ACTION BUTTONS */}
-            <div className="mt-4 space-x-4">
+            {/* 🎯 ACTION BUTTONS */}
+            <div className="mt-5 flex gap-4">
 
               <button
                 onClick={() => updateStatus(app.id, "accepted")}
-                className="bg-green-600 text-white px-4 py-2 rounded"
+                className="bg-green-600 text-white px-4 py-2 rounded hover:opacity-90"
               >
                 Accept
               </button>
 
               <button
                 onClick={() => updateStatus(app.id, "rejected")}
-                className="bg-red-600 text-white px-4 py-2 rounded"
+                className="bg-red-600 text-white px-4 py-2 rounded hover:opacity-90"
               >
                 Reject
               </button>
