@@ -11,12 +11,15 @@ export default function Navbar() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
+  // 🔔 NOTIFICATIONS
+  const [notificationCount, setNotificationCount] = useState(0);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const router = useRouter();
   const pathname = usePathname();
 
-  // 🔐 GET USER
+  // 🔐 GET USER + PROFILE + NOTIFICATIONS
   useEffect(() => {
 
     const getUser = async () => {
@@ -44,6 +47,18 @@ export default function Navbar() {
       );
 
       setAvatarUrl(profile?.avatar_url || null);
+
+      // 🔔 FETCH UNREAD NOTIFICATIONS
+      const { count } = await supabase
+        .from("notifications")
+        .select("*", {
+          count: "exact",
+          head: true,
+        })
+        .eq("user_id", currentUser.id)
+        .eq("is_read", false);
+
+      setNotificationCount(count || 0);
     };
 
     getUser();
@@ -93,7 +108,7 @@ export default function Navbar() {
     const active = pathname === path;
 
     return `
-      transition hover:text-black
+      transition hover:text-black relative
       ${active
         ? "text-black font-semibold"
         : "text-gray-600"}
@@ -104,7 +119,7 @@ export default function Navbar() {
 
     <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-lg">
 
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
 
         <div className="h-16 flex items-center justify-between">
 
@@ -117,7 +132,7 @@ export default function Navbar() {
           </a>
 
           {/* RIGHT SIDE */}
-          <div className="flex items-center gap-6 text-sm">
+          <div className="flex items-center gap-3 md:gap-6 text-sm">
 
             {/* NOT LOGGED IN */}
             {!user && (
@@ -148,7 +163,20 @@ export default function Navbar() {
                   href="/notifications"
                   className={linkClass("/notifications")}
                 >
-                  Notifications
+                  <div className="relative">
+
+                    <span>
+                      Notifications
+                    </span>
+
+                    {/* BADGE */}
+                    {notificationCount > 0 && (
+                      <span className="absolute -top-2 -right-4 bg-red-500 text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center font-medium">
+                        {notificationCount}
+                      </span>
+                    )}
+
+                  </div>
                 </a>
 
                 {/* 👨‍⚕️ DOCTOR */}
@@ -226,7 +254,7 @@ export default function Navbar() {
                   {/* DROPDOWN */}
                   {open && (
 
-                    <div className="absolute right-0 mt-3 w-56 bg-white border rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                    <div className="absolute right-0 mt-3 w-56 bg-white border rounded-2xl shadow-xl overflow-hidden">
 
                       {/* USER INFO */}
                       <div className="px-4 py-3 border-b">
@@ -264,9 +292,17 @@ export default function Navbar() {
                       {/* NOTIFICATIONS */}
                       <a
                         href="/notifications"
-                        className="block px-4 py-3 text-sm hover:bg-gray-100 transition"
+                        className="flex items-center justify-between px-4 py-3 text-sm hover:bg-gray-100 transition"
                       >
-                        Notifications
+                        <span>
+                          Notifications
+                        </span>
+
+                        {notificationCount > 0 && (
+                          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                            {notificationCount}
+                          </span>
+                        )}
                       </a>
 
                       {/* LOGOUT */}
