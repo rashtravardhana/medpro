@@ -1,61 +1,113 @@
 # 🏥 MedCareer AI Context File (Latest)
 
 ## 📌 Project Overview
-MedCareer is a full-stack SaaS web application that connects healthcare professionals (doctors) with hospitals for job opportunities.
 
-Doctors can explore jobs, apply, upload resumes, and track applications.  
-Admins (hospitals) can post jobs, review applicants, and manage hiring.
+MedCareer is a full-stack SaaS-style healthcare hiring platform that connects doctors and healthcare professionals with hospitals and recruiters.
+
+Doctors can:
+- Discover jobs
+- Apply for jobs
+- Upload resumes
+- Manage profiles
+- Track applications
+- Receive notifications
+
+Hospitals/Admins can:
+- Post jobs
+- Manage applicants
+- Review doctor profiles
+- Track hiring analytics
 
 ---
 
-## 🏗️ Tech Stack
+# 🏗️ Tech Stack
 
-- Frontend: Next.js (App Router, Client Components)
-- Backend: Supabase (Auth + PostgreSQL + Storage)
-- Database: PostgreSQL
-- Storage: Supabase Storage (resumes, avatars)
-- Styling: Tailwind CSS
-- Hosting: Vercel
+## Frontend
+- Next.js (App Router)
+- React
+- Tailwind CSS
+
+## Backend
+- Supabase
+  - Authentication
+  - PostgreSQL Database
+  - Storage
+
+## Database
+- PostgreSQL
+
+## Hosting
+- Vercel
 
 ---
 
-## 👥 User Roles
+# 📦 Package Setup
 
-### 👨‍⚕️ Doctor
-- Register / Login
+## Main Dependencies
+- next
+- react
+- react-dom
+- @supabase/supabase-js
+
+## Dev Dependencies
+- typescript
+- tailwindcss
+- eslint
+- eslint-config-next
+
+---
+
+# 👥 User Roles
+
+## 👨‍⚕️ Doctor
+
+Doctors can:
+- Register/Login
 - View jobs
 - Apply for jobs
-- Upload resume (PDF)
-- Upload profile avatar
-- Track applications (dashboard)
-- View application status
+- Upload resume
+- Upload avatar
+- Track applications
+- View notifications
+- Access dashboard
+- View related jobs
 
 ---
 
-### 🏥 Admin
+## 🏥 Admin
+
+Admins can:
 - Post jobs
-- View all posted jobs
-- View applicants per job
-- Accept / Reject applications
+- View applicants
+- Accept applications
+- Reject applications
 - View doctor profiles
-- View resumes
 - Access analytics dashboard
+- Manage hiring workflow
 
 ---
 
-## 🗄️ Database Schema
+# 🗄️ Database Schema
 
-### 🔹 profiles
+## 🔹 profiles
+
+Stores user profile data.
+
+Columns:
 - id (uuid, PK, same as auth.users.id)
 - name (text)
-- role (text) → "doctor" or "admin"
+- role (text)
 - profession (text)
 - resume_url (text)
 - avatar_url (text)
 
 ---
 
-### 🔹 jobs
+## 🔹 jobs
+
+Stores job listings.
+
+Columns:
 - id (uuid, PK)
 - title (text)
 - hospital_name (text)
@@ -65,171 +117,325 @@ Admins (hospitals) can post jobs, review applicants, and manage hiring.
 - responsibilities (text)
 - requirements (text)
 - experience (text)
-- type (text)
 - profession (text)
+- type (text)
 - admin_id (uuid)
 - created_at (timestamp)
 
 ---
 
-### 🔹 applications
+## 🔹 applications
+
+Stores job applications.
+
+Columns:
 - id (uuid, PK)
 - user_id (uuid → profiles.id)
 - job_id (uuid → jobs.id)
-- status (text) → pending / accepted / rejected
+- status (text)
 - created_at (timestamp)
+
+Status values:
+- pending
+- accepted
+- rejected
 
 ---
 
-## 🔗 Relationships
+## 🔹 notifications
+
+Stores user notifications.
+
+Columns:
+- id (uuid, PK)
+- user_id (uuid → profiles.id)
+- title (text)
+- message (text)
+- is_read (boolean)
+- created_at (timestamp)
+
+Used for:
+- Application updates
+- User alerts
+- Future admin notifications
+
+SQL used:
+
+```sql
+create table notifications (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) on delete cascade,
+  title text,
+  message text,
+  is_read boolean default false,
+  created_at timestamp with time zone default timezone('utc', now())
+);
+```
+
+---
+
+# 🔗 Relationships
 
 - applications.user_id → profiles.id
 - applications.job_id → jobs.id
+- notifications.user_id → profiles.id
 
-👉 Required for JOIN queries:
+Required for JOIN queries.
+
+Example:
+
 ```js
 .select("jobs(title, hospital_name)")
 ```
 
 ---
 
-## 🔐 Authentication Flow
+# 🔐 Authentication Flow
 
-- Supabase Auth handles login/signup
-- After login:
-  1. Fetch user → `auth.getUser()`
-  2. Fetch role → `profiles` table
-- Role-based routing:
-  - doctor → `/dashboard`
-  - admin → `/admin/dashboard`
+Supabase Auth handles login/signup.
+
+After login:
+1. Fetch authenticated user
+2. Fetch role from profiles table
+3. Redirect based on role
+
+Role routes:
+- doctor → `/dashboard`
+- admin → `/admin/dashboard`
+
+Example:
+
+```js
+const { data } = await supabase.auth.getUser();
+```
 
 ---
 
-## 📄 Core Pages
+# 📄 Core Pages
 
-### 🔹 Homepage (/)
+## 🔹 Homepage (`/`)
 - Hero section
 - CTA buttons
 - Feature highlights
+- Responsive layout
 
 ---
 
-### 🔹 Auth (/auth)
-- Login / Register
-- Redirect based on role
+## 🔹 Auth (`/auth`)
+- Login
+- Register
+- Role-based redirect
 
 ---
 
-### 🔹 Doctor Dashboard (/dashboard)
-- Welcome message
+## 🔹 Jobs Page (`/jobs`)
+Displays all jobs.
+
+Shows:
+- Job title
+- Hospital name
+- Salary
+- Location
+- Job type
+
+---
+
+## 🔹 Job Detail (`/jobs/[id]`)
+
+Advanced job details page with:
+- Full job description
+- Responsibilities
+- Requirements
+- Profession tags
+- Salary details
+- Sticky apply card
+- Related jobs section
+
+Features:
+- Duplicate application prevention
+- Resume required before applying
+- Admin cannot apply
+- Notification insertion after apply
+- Related jobs based on profession
+
+---
+
+## 🔹 Applications (`/applications`)
+Displays doctor applications.
+
+Uses JOIN query with jobs table.
+
+Shows:
+- Job title
+- Hospital name
+- Status
+- Applied date
+
+---
+
+## 🔹 Doctor Dashboard (`/dashboard`)
+Doctor dashboard includes:
+- Welcome section
 - Resume upload
 - Application tracking
-- Uses JOIN with jobs table
+- Quick stats
+- Job tracking
 
 ---
 
-### 🔹 Applications (/applications)
-- Shows applied jobs
-- Displays:
-  - Job title
-  - Hospital name
-  - Status
+## 🔹 Profile (`/profile`)
+Users can:
+- Upload resume PDF
+- Upload avatar image
+- Update profile info
+- View current resume
+
+Uses Supabase Storage.
+
+Buckets:
+- resumes
+- avatars
 
 ---
 
-### 🔹 Jobs (/jobs)
-- List of all jobs
-- Shows title, hospital, location, salary
+## 🔹 Notifications (`/notifications`)
+
+Displays user notifications.
+
+Features:
+- Notification list
+- Unread indicator
+- Ordered by latest
+- Loading state
+- Empty state UI
+
+Navbar also shows:
+- Notification badge count
+- Dropdown notification count
 
 ---
 
-### 🔹 Job Detail (/jobs/[id])
-- Full job details
-- Apply button
-- Prevents duplicate applications
-- Admin cannot apply
+## 🔹 Admin Dashboard (`/admin/dashboard`)
+Admin can:
+- View posted jobs
+- Navigate to applicants
+- Manage job listings
 
 ---
 
-### 🔹 Profile (/profile)
-- Upload resume (PDF)
-- Upload avatar
-- View resume
+## 🔹 Applicants (`/admin/applicants/[id]`)
+Shows applicants per job.
+
+Displays:
+- Doctor name
+- Profession
+- Status
+
+Actions:
+- Accept
+- Reject
 
 ---
 
-### 🔹 Admin Dashboard (/admin/dashboard)
-- Shows jobs posted by admin
-- Links to:
-  - Job detail
-  - Applicants page
+## 🔹 Doctor Profile (`/admin/doctor/[id]`)
+Admin can view:
+- Doctor name
+- Profession
+- Resume
+- Avatar
 
 ---
 
-### 🔹 Applicants (/admin/applicants/[id])
-- Shows applicants for a job
-- Displays:
-  - Name
-  - Role
-  - Status
-- Actions:
-  - Accept
-  - Reject
+## 🔹 Admin Analytics (`/admin/analytics`)
+Shows:
+- Total jobs
+- Total applications
+- Accepted count
+- Rejected count
+
+Future:
+- Charts
+- Advanced analytics
 
 ---
 
-### 🔹 Doctor Profile (/admin/doctor/[id])
-- Shows:
-  - Name
-  - Role
-  - Profession
-  - Resume
+# 🧭 Navigation System
+
+## Navbar Features
+
+Dynamic navbar based on:
+- Authentication
+- User role
+
+Links include:
+- Jobs
+- Notifications
+- Dashboard
+- Applications
+- Admin dashboard
+- Analytics
+- Post Job
+
+Avatar dropdown includes:
+- Profile
+- Dashboard
+- Notifications
+- Logout
 
 ---
 
-### 🔹 Admin Analytics (/admin/analytics)
-- Shows:
-  - Total jobs
-  - Total applications
-  - Accepted / Rejected counts
-- (Charts optional / future)
+# 🚀 Features Implemented
 
----
-
-## 🧭 Navigation System
-
-- Dynamic Navbar based on role
-- Shows:
-  - Jobs
-  - Dashboard/Admin
-- Avatar dropdown:
-  - Profile
-  - Dashboard
-  - Logout
-
----
-
-## 🚀 Features Implemented
-
-- Authentication system
+## Authentication
+- Login/Register
+- Supabase Auth
 - Role-based routing
-- Job posting
-- Job applying
-- Duplicate application prevention (frontend)
-- Resume upload
+
+## Jobs
+- Post jobs
+- View jobs
+- Related jobs
+- Job details
+
+## Applications
+- Apply system
+- Duplicate prevention
+- Resume validation
+- Status tracking
+
+## Profiles
 - Avatar upload
-- Admin applicant management
-- Profile viewing
-- Dashboard tracking
-- Basic analytics
-- Premium navbar with dropdown
+- Resume upload
+- Profile management
+
+## Notifications
+- Notification table
+- Notification badge
+- Notification page
+- Unread count
+- Auto insert after applying
+
+## Admin Features
+- Applicant management
+- Accept/Reject workflow
+- Analytics dashboard
+
+## UI/UX
+- Premium navbar
+- Responsive layouts
+- Sticky apply card
+- Tailwind modern UI
+- Dropdown menus
+- Loading states
 
 ---
 
-## ⚠️ Common Issues & Fixes
+# ⚠️ Common Issues & Fixes
 
-### ❌ Applications showing only job_id
+## ❌ Applications showing only job_id
+
 Fix:
+
 ```js
 .select(`
   id,
@@ -240,60 +446,146 @@ Fix:
 
 ---
 
-### ❌ Duplicate applications
+## ❌ Duplicate applications
+
 Fix:
+
 ```sql
-create unique index unique_application 
+create unique index unique_application
 on applications (user_id, job_id);
 ```
 
 ---
 
-### ❌ Profile not found
+## ❌ Profile not found
+
 Fix:
 - profiles.id must equal auth.users.id
-- Insert profile after signup
+- Insert profile row after signup
 
 ---
 
-### ❌ Storage issues
+## ❌ Resume upload issues
+
 Check:
-- Bucket exists (resumes / avatars)
-- Correct file type
+- resumes bucket exists
+- PDF allowed
 - Public URL generated
 
 ---
 
-### ❌ Infinite loading
+## ❌ Avatar upload issues
+
+Check:
+- avatars bucket exists
+- Image file allowed
+- Public URL generated
+
+---
+
+## ❌ Infinite loading
+
 Fix:
-Always call:
+
 ```js
 setLoading(false)
 ```
 
 ---
 
-## 🔮 Future Improvements
+## ❌ Notifications not showing
 
-- Charts (Chart.js)
-- Notifications
+Check:
+- notifications table exists
+- RLS policy enabled correctly
+- user_id inserted properly
+
+---
+
+# 🔒 RLS (Row Level Security)
+
+Recommended RLS for notifications:
+
+```sql
+alter table notifications enable row level security;
+```
+
+Policy:
+
+```sql
+create policy "Users can view own notifications"
+on notifications
+for select
+using (auth.uid() = user_id);
+```
+
+Insert policy:
+
+```sql
+create policy "Users can insert own notifications"
+on notifications
+for insert
+with check (auth.uid() = user_id);
+```
+
+Update policy:
+
+```sql
+create policy "Users can update own notifications"
+on notifications
+for update
+using (auth.uid() = user_id);
+```
+
+---
+
+# 📁 Supabase Storage
+
+## Buckets
+
+### resumes
+Stores PDF resumes.
+
+### avatars
+Stores user profile images.
+
+---
+
+# 🔮 Future Improvements
+
+Planned features:
+- Realtime notifications
 - Chat system
-- Job filters & search
-- Pagination
 - Email alerts
+- Job search & filters
+- Pagination
+- Saved jobs
+- Profile completeness score
+- Charts with Chart.js
+- Admin moderation tools
+- Realtime analytics
 
 ---
 
-## 🎯 Purpose
+# 🎯 Purpose
 
-Used for:
-- AI understanding
-- Debugging
-- Faster development
-- Scaling project
+This AI context file is used for:
+- AI coding assistance
+- Faster debugging
+- Feature planning
+- Project scaling
+- Architecture understanding
 
 ---
 
-## 🧠 Status
+# 🧠 Current Project Status
 
-MedCareer is now a working MVP SaaS platform with full doctor ↔ hospital workflow.
+MedCareer is now a working MVP SaaS healthcare hiring platform with:
+- Full authentication
+- Doctor/Admin workflow
+- Job system
+- Application tracking
+- Notification system
+- Analytics
+- Responsive modern UI
+- Supabase backend integration
