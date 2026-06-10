@@ -12,8 +12,7 @@ export async function middleware(req: NextRequest) {
 
   const pathname = req.nextUrl.pathname;
 
-  // Not logged in — redirect to auth
-  if (!session && pathname !== '/auth') {
+  if (!session) {
     if (
       pathname.startsWith('/dashboard') ||
       pathname.startsWith('/admin') ||
@@ -26,7 +25,6 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Logged in — protect admin routes
   if (session && pathname.startsWith('/admin')) {
     const { data: profile } = await supabase
       .from('profiles')
