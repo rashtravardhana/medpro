@@ -1,116 +1,73 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import supabase from "@/lib/supabase";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import supabase from '@/lib/supabase';
 
 export default function AuthPage() {
-
   const router = useRouter();
-
-  // 🔁 MODE SWITCH
   const [isLogin, setIsLogin] = useState(true);
-
-  // FORM STATE
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("doctor");
-  const [profession, setProfession] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const [message, setMessage] = useState("");
+  const [name, setName] = useState('');
+  const [role, setRole] = useState('doctor');
+  const [profession, setProfession] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 🔐 LOGIN
   const handleLogin = async () => {
-
     setLoading(true);
-    setMessage("");
+    setMessage('');
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) { setMessage(error.message); setLoading(false); return; }
 
-    if (error) {
-      setMessage(error.message);
-      setLoading(false);
-      return;
-    }
-
-    // 🔹 GET ROLE
     const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", data.user.id)
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
       .single();
 
-    if (profileError) {
-      setMessage("Error fetching user profile");
-      setLoading(false);
-      return;
-    }
+    if (profileError) { setMessage('Error fetching profile'); setLoading(false); return; }
 
-    const role = profile?.role?.toLowerCase().trim();
-
-    // ✅ FIXED REDIRECT
-    if (role === "admin") {
-      router.push("/admin/dashboard");
-    } else if (role === "doctor") {
-      router.push("/dashboard"); // ✅ THIS FIXES YOUR ISSUE
-    } else {
-      router.push("/jobs");
-    }
+    const userRole = profile?.role?.toLowerCase().trim();
+    if (userRole === 'admin') router.push('/admin/dashboard');
+    else if (userRole === 'doctor') router.push('/dashboard');
+    else router.push('/jobs');
 
     setLoading(false);
   };
 
-  // 📝 REGISTER
   const handleRegister = async () => {
-
     setLoading(true);
-    setMessage("");
+    setMessage('');
 
     if (!name || !email || !password) {
-      setMessage("Please fill all required fields");
+      setMessage('Please fill all required fields');
       setLoading(false);
       return;
     }
 
-    if (role === "doctor" && !profession) {
-      setMessage("Please select profession");
+    if (role === 'doctor' && !profession) {
+      setMessage('Please select your profession');
       setLoading(false);
       return;
     }
 
-    // 🔥 SIGN UP
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password
-    });
-
-    if (error) {
-      setMessage(error.message);
-      setLoading(false);
-      return;
-    }
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) { setMessage(error.message); setLoading(false); return; }
 
     if (data.user) {
-      // SAVE PROFILE
-      const { error: insertError } = await supabase.from("profiles").insert({
+      const { error: insertError } = await supabase.from('profiles').insert({
         id: data.user.id,
         name,
         role: role.toLowerCase().trim(),
-        profession: role === "doctor" ? profession : null
+        profession: role === 'doctor' ? profession : null,
       });
 
-      if (insertError) {
-        setMessage(insertError.message);
-        setLoading(false);
-        return;
-      }
+      if (insertError) { setMessage(insertError.message); setLoading(false); return; }
 
-      setMessage("✅ Registered successfully. Please login.");
+      setMessage('✅ Registered successfully! Please login.');
       setIsLogin(true);
     }
 
@@ -118,108 +75,129 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
 
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-blue-600 mb-1">MedCareer</h1>
+          <p className="text-gray-500 text-sm">Healthcare hiring platform</p>
+        </div>
 
-        <h1 className="text-3xl font-semibold mb-6 text-center">
-          {isLogin ? "Login" : "Register"}
-        </h1>
+        {/* Toggle */}
+        <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
+          <button
+            onClick={() => setIsLogin(true)}
+            className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition ${isLogin ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
+          >
+            Login
+          </button>
+          <button
+            onClick={() => setIsLogin(false)}
+            className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition ${!isLogin ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
+          >
+            Register
+          </button>
+        </div>
 
-        {/* 📝 REGISTER ONLY */}
-        {!isLogin && (
-          <>
+        <div className="space-y-4">
+          {/* Register Only Fields */}
+          {!isLogin && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  placeholder="Dr. John Smith"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">I am a</label>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+                >
+                  <option value="doctor">Doctor / Healthcare Professional</option>
+                  <option value="admin">Hospital / Recruiter</option>
+                </select>
+              </div>
+
+              {role === 'doctor' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Profession</label>
+                  <select
+                    value={profession}
+                    onChange={(e) => setProfession(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+                  >
+                    <option value="">Select Profession</option>
+                    <option value="MBBS">MBBS</option>
+                    <option value="BDS">BDS</option>
+                    <option value="BAMS">BAMS</option>
+                    <option value="BHMS">BHMS</option>
+                    <option value="Nursing">Nursing</option>
+                  </select>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Common Fields */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
-              type="text"
-              placeholder="Full Name"
-              className="w-full border p-3 rounded mb-4"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             />
+          </div>
 
-            <select
-              className="w-full border p-3 rounded mb-4"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input
+              type="password"
+              placeholder="Min. 8 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            />
+          </div>
+
+          {/* Error / Success Message */}
+          {message && (
+            <div className={`text-sm px-4 py-3 rounded-xl border ${message.startsWith('✅') ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600'}`}>
+              {message}
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <button
+            onClick={isLogin ? handleLogin : handleRegister}
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Please wait...' : isLogin ? 'Login' : 'Create Account'}
+          </button>
+
+          {/* Switch Mode */}
+          <p className="text-center text-sm text-gray-500">
+            {isLogin ? "Don't have an account?" : 'Already have an account?'}
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              className="ml-2 text-blue-600 font-medium hover:underline"
             >
-              <option value="doctor">Doctor</option>
-              <option value="admin">Hospital Admin</option>
-            </select>
-
-            {role === "doctor" && (
-              <select
-                className="w-full border p-3 rounded mb-4"
-                value={profession}
-                onChange={(e) => setProfession(e.target.value)}
-              >
-                <option value="">Select Profession</option>
-                <option value="MBBS">MBBS</option>
-                <option value="BDS">BDS</option>
-                <option value="BAMS">BAMS</option>
-                <option value="BHMS">BHMS</option>
-                <option value="Nursing">Nursing</option>
-              </select>
-            )}
-          </>
-        )}
-
-        {/* 🔐 COMMON FIELDS */}
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full border p-3 rounded mb-4"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full border p-3 rounded mb-6"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        {/* 🔘 BUTTON */}
-        {isLogin ? (
-          <button
-            onClick={handleLogin}
-            className="w-full bg-black text-white py-3 rounded-full"
-            disabled={loading}
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        ) : (
-          <button
-            onClick={handleRegister}
-            className="w-full bg-black text-white py-3 rounded-full"
-            disabled={loading}
-          >
-            {loading ? "Registering..." : "Register"}
-          </button>
-        )}
-
-        {/* 🔁 SWITCH */}
-        <p className="mt-6 text-center text-sm text-gray-500">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}
-
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="ml-2 text-black font-medium"
-          >
-            {isLogin ? "Register" : "Login"}
-          </button>
-        </p>
-
-        {/* ❗ MESSAGE */}
-        {message && (
-          <p className="mt-4 text-center text-red-500">
-            {message}
+              {isLogin ? 'Register' : 'Login'}
+            </button>
           </p>
-        )}
-
+        </div>
       </div>
-
     </div>
   );
 }
