@@ -1,264 +1,274 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import supabase from "@/lib/supabase";
-import useAuth from "@/lib/useAuth";
+import { useEffect, useState } from 'react';
+import supabase from '@/lib/supabase';
+import useAuth from '@/lib/useAuth';
+import ProfileProgress from '@/components/ProfileProgress';
+import Link from 'next/link';
+import type { Profile } from '@/types';
 
 export default function UserDashboard() {
-
-  // ✅ AUTH
-  const { user, loading } = useAuth("doctor");
-
+  const { user, loading } = useAuth('doctor');
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [applications, setApplications] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
-  const [userName, setUserName] = useState<string>("User");
   const [uploading, setUploading] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState('');
 
   const [stats, setStats] = useState({
     total: 0,
     accepted: 0,
     pending: 0,
-    rejected: 0
+    rejected: 0,
   });
 
-  // 🔹 FETCH DATA
   useEffect(() => {
-
     if (!user) return;
-
-    const fetchData = async () => {
-
-      // 👤 PROFILE
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("name")
-        .eq("id", user.id)
-        .single();
-
-      setUserName(profile?.name || "User");
-
-      // 📄 APPLICATIONS
-      const { data: apps } = await supabase
-        .from("applications")
-        .select(`
-          id,
-          status,
-          created_at,
-          jobs (
-            title,
-            hospital_name,
-            location,
-            salary
-          )
-        `)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      const list = apps || [];
-      setApplications(list);
-
-      // 📊 STATS
-      setStats({
-        total: list.length,
-        accepted: list.filter(a => a.status === "accepted").length,
-        pending: list.filter(a => a.status === "pending").length,
-        rejected: list.filter(a => a.status === "rejected").length
-      });
-
-      setDataLoading(false);
-    };
-
     fetchData();
-
   }, [user]);
 
-  // 🔹 RESUME UPLOAD
-  const handleUploadResume = async (e: any) => {
+  async function fetchData() {
+    // Profile
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
 
+    setProfile(profileData);
+
+    // Applications
+    const { data: apps } = await supabase
+      .from('applications')
+      .select(`
+        id,
+        status,
+        created_at,
+        jobs (
+          title,
+          hospital_name,
+          location,
+          salary
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    const list = apps || [];
+    setApplications(list);
+
+    setStats({
+      total: list.length,
+      accepted: list.filter((a) => a.status === 'accepted').length,
+      pending: list.filter((a) => a.status === 'pending').length,
+      rejected: list.filter((a) => a.status === 'rejected').length,
+    });
+
+    setDataLoading(false);
+  }
+
+  async function handleUploadResume(e: any) {
     const file = e.target.files?.[0];
     if (!file || !user) return;
+    if (file.type !== 'application/pdf') {
+      setUploadMessage('❌ Please upload a PDF file.');
+      return;
+    }
 
     setUploading(true);
+    setUploadMessage('');
 
     const fileName = `${user.id}.pdf`;
 
     const { error } = await supabase.storage
-      .from("resumes")
+      .from('resumes')
       .upload(fileName, file, { upsert: true });
 
     if (error) {
-      alert(error.message);
+      setUploadMessage('❌ Upload failed: ' + error.message);
       setUploading(false);
       return;
     }
 
-    const { data } = supabase.storage
-      .from("resumes")
-      .getPublicUrl(fileName);
+    const { data } = supabase.storage.from('resumes').getPublicUrl(fileName);
 
     await supabase
-      .from("profiles")
+      .from('profiles')
       .update({ resume_url: data.publicUrl })
-      .eq("id", user.id);
+      .eq('id', user.id);
 
-    alert("Resume uploaded ✅");
+    setUploadMessage('✅ Resume uploaded successfully!');
+    setProfile((p) => p ? { ...p, resume_url: data.publicUrl } : p);
     setUploading(false);
-  };
+  }
 
-  // 🎨 STATUS STYLE
   const getStatusStyle = (status: string) => {
-    if (status === "accepted") return "bg-green-100 text-green-700";
-    if (status === "rejected") return "bg-red-100 text-red-700";
-    return "bg-yellow-100 text-yellow-700";
+    if (status === 'accepted') return 'bg-green-100 text-green-700';
+    if (status === 'rejected') return 'bg-red-100 text-red-700';
+    return 'bg-yellow-100 text-yellow-700';
   };
 
-  // ⏳ AUTH LOADING
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <p>Checking authentication...</p>
+        <p className="text-gray-400 animate-pulse">Checking authentication...</p>
       </div>
     );
   }
 
-  // ⏳ DATA LOADING
   if (dataLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-white">
-        <p className="text-gray-400 animate-pulse text-lg">
-          Loading your dashboard...
-        </p>
+      <div className="h-screen flex items-center justify-center">
+        <p className="text-gray-400 animate-pulse text-lg">Loading your dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-16">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-10">
 
-      <div className="max-w-6xl mx-auto">
-
-        {/* 👋 HEADER */}
-        <div className="mb-10 text-center">
-          <h1 className="text-4xl font-semibold">
-            Welcome, {userName}
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome back, {profile?.name?.split(' ')[0]} 👋
           </h1>
-          <p className="text-gray-500 mt-2">
-            Track your job applications
-          </p>
+          <p className="text-gray-500 mt-1">Here's your career overview</p>
         </div>
 
-        {/* 📊 STATS */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
-
-          <div className="bg-white p-6 rounded-xl shadow text-center">
-            <p className="text-gray-500 text-sm">Total</p>
-            <h2 className="text-2xl font-semibold">{stats.total}</h2>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow text-center">
-            <p className="text-gray-500 text-sm">Accepted</p>
-            <h2 className="text-2xl font-semibold text-green-600">
-              {stats.accepted}
-            </h2>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow text-center">
-            <p className="text-gray-500 text-sm">Pending</p>
-            <h2 className="text-2xl font-semibold text-yellow-600">
-              {stats.pending}
-            </h2>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow text-center">
-            <p className="text-gray-500 text-sm">Rejected</p>
-            <h2 className="text-2xl font-semibold text-red-600">
-              {stats.rejected}
-            </h2>
-          </div>
-
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: 'Total', value: stats.total, color: 'text-blue-600', bg: 'bg-blue-50' },
+            { label: 'Pending', value: stats.pending, color: 'text-yellow-600', bg: 'bg-yellow-50' },
+            { label: 'Accepted', value: stats.accepted, color: 'text-green-600', bg: 'bg-green-50' },
+            { label: 'Rejected', value: stats.rejected, color: 'text-red-600', bg: 'bg-red-50' },
+          ].map((s) => (
+            <div key={s.label} className={`${s.bg} rounded-xl p-5`}>
+              <p className="text-sm text-gray-500 mb-1">{s.label}</p>
+              <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
+            </div>
+          ))}
         </div>
 
-        {/* 📄 RESUME */}
-        <div className="mb-12 bg-white p-6 rounded-xl shadow text-center">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          <h2 className="text-lg font-semibold mb-3">
-            Upload Resume (PDF)
-          </h2>
-
-          <input
-            type="file"
-            accept=".pdf"
-            onChange={handleUploadResume}
-          />
-
-          {uploading && (
-            <p className="text-gray-500 mt-2">Uploading...</p>
-          )}
-
-        </div>
-
-        {/* ❌ EMPTY */}
-        {applications.length === 0 ? (
-          <div className="text-center bg-white p-10 rounded-xl shadow">
-            <p className="text-gray-500 text-lg">
-              You haven’t applied to any jobs yet.
-            </p>
-
-            <a
-              href="/jobs"
-              className="inline-block mt-6 px-6 py-3 bg-black text-white rounded-full"
-            >
-              Explore Jobs
-            </a>
-          </div>
-        ) : (
-
-          <div className="space-y-6">
-
-            {applications.map((app) => (
-
-              <div
-                key={app.id}
-                className="bg-white p-6 rounded-xl shadow hover:shadow-md transition"
-              >
-
-                <h2 className="text-xl font-semibold">
-                  {app.jobs?.title || "Untitled Job"}
-                </h2>
-
-                <p className="text-gray-500 mt-1">
-                  {app.jobs?.hospital_name}
-                </p>
-
-                <div className="mt-3 text-sm text-gray-600 space-y-1">
-                  <p>📍 {app.jobs?.location}</p>
-                  <p>💰 {app.jobs?.salary || "Not disclosed"}</p>
-                </div>
-
-                <div className="mt-4 flex justify-between items-center">
-
-                  <span className="text-sm text-gray-400">
-                    Applied on{" "}
-                    {new Date(app.created_at).toLocaleDateString()}
-                  </span>
-
-                  <span
-                    className={`px-4 py-1 rounded-full text-sm font-medium ${getStatusStyle(app.status)}`}
-                  >
-                    {app.status}
-                  </span>
-
-                </div>
-
+          {/* Applications List */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="flex justify-between items-center mb-5">
+                <h2 className="font-semibold text-gray-800 text-lg">Recent Applications</h2>
+                <Link href="/applications" className="text-sm text-blue-600 hover:underline">
+                  View all
+                </Link>
               </div>
 
-            ))}
+              {applications.length === 0 ? (
+                <div className="text-center py-10">
+                  <p className="text-gray-400 mb-3">No applications yet</p>
+                  <Link
+                    href="/jobs"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+                  >
+                    Browse Jobs
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {applications.slice(0, 5).map((app) => (
+                    <div
+                      key={app.id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-800 text-sm">
+                          {app.jobs?.title || 'Untitled Job'}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {app.jobs?.hospital_name} · {app.jobs?.location}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Applied {new Date(app.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${getStatusStyle(app.status)}`}>
+                        {app.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
+            {/* Resume Upload */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
+              <h2 className="font-semibold text-gray-800 mb-4">Upload Resume</h2>
+
+              {profile?.resume_url && (
+                <div className="flex items-center gap-3 mb-4 p-3 bg-green-50 border border-green-200 rounded-xl">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="text-sm text-green-700 font-medium flex-1">Resume uploaded</span>
+                  <a
+                    href={profile.resume_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    View
+                  </a>
+                </div>
+              )}
+
+              <label className="cursor-pointer bg-gray-100 text-gray-700 border border-gray-300 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-200 transition inline-block">
+                {uploading ? 'Uploading...' : profile?.resume_url ? 'Replace Resume' : 'Upload Resume (PDF)'}
+                <input
+                  type="file"
+                  accept=".pdf"
+                  className="hidden"
+                  onChange={handleUploadResume}
+                  disabled={uploading}
+                />
+              </label>
+
+              {uploadMessage && (
+                <p className={`mt-3 text-sm ${uploadMessage.startsWith('✅') ? 'text-green-600' : 'text-red-500'}`}>
+                  {uploadMessage}
+                </p>
+              )}
+            </div>
           </div>
-        )}
 
+          {/* Sidebar */}
+          <div className="space-y-5">
+            {profile && <ProfileProgress profile={profile} />}
+
+            {/* Quick Links */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h3 className="font-semibold text-gray-800 mb-4">Quick Links</h3>
+              <div className="space-y-2">
+                {[
+                  { href: '/jobs', label: 'Browse Jobs', icon: '🔍' },
+                  { href: '/saved-jobs', label: 'Saved Jobs', icon: '🔖' },
+                  { href: '/applications', label: 'All Applications', icon: '📄' },
+                  { href: '/profile', label: 'Update Profile', icon: '👤' },
+                  { href: '/notifications', label: 'Notifications', icon: '🔔' },
+                ].map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition text-sm text-gray-700"
+                  >
+                    <span>{link.icon}</span>
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-
     </div>
   );
 }
