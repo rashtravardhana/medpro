@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import supabase from '@/lib/supabase';
 
 export default function AuthPage() {
@@ -12,44 +12,6 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [checking, setChecking] = useState(true);
-  const redirected = useRef(false);
-
-  // Check if already logged in — only runs once
-  useEffect(() => {
-    const checkSession = async () => {
-      if (redirected.current) return;
-
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        setChecking(false);
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile) {
-        setChecking(false);
-        return;
-      }
-
-      redirected.current = true;
-      const userRole = profile.role?.toLowerCase().trim();
-
-      if (userRole === 'admin') window.location.href = '/admin/dashboard';
-      else if (userRole === 'doctor') window.location.href = '/dashboard';
-      else {
-        setChecking(false);
-      }
-    };
-
-    checkSession();
-  }, []);
 
   const handleLogin = async () => {
     setLoading(true);
@@ -67,22 +29,27 @@ export default function AuthPage() {
     }
 
     if (data.user) {
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', data.user.id)
         .single();
 
-      if (profileError || !profile) {
-        setMessage('Error fetching profile. Please try again.');
+      if (!profile) {
+        setMessage('Profile not found. Please contact support.');
         setLoading(false);
         return;
       }
 
       const userRole = profile.role?.toLowerCase().trim();
-      if (userRole === 'admin') window.location.href = '/admin/dashboard';
-      else if (userRole === 'doctor') window.location.href = '/dashboard';
-      else window.location.href = '/jobs';
+
+      if (userRole === 'admin') {
+        window.location.replace('/admin/dashboard');
+      } else if (userRole === 'doctor') {
+        window.location.replace('/dashboard');
+      } else {
+        window.location.replace('/jobs');
+      }
     }
 
     setLoading(false);
@@ -104,7 +71,10 @@ export default function AuthPage() {
       return;
     }
 
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
 
     if (error) {
       setMessage(error.message);
@@ -142,15 +112,6 @@ export default function AuthPage() {
 
     setLoading(false);
   };
-
-  // Show blank screen while checking session
-  if (checking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-gray-400 animate-pulse">Loading...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -238,7 +199,7 @@ export default function AuthPage() {
             </>
           )}
 
-          {/* Common Fields */}
+          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Email
@@ -252,6 +213,7 @@ export default function AuthPage() {
             />
           </div>
 
+          {/* Password */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Password
@@ -276,7 +238,7 @@ export default function AuthPage() {
             </div>
           )}
 
-          {/* Submit Button */}
+          {/* Submit */}
           <button
             onClick={isLogin ? handleLogin : handleRegister}
             disabled={loading}
@@ -285,7 +247,7 @@ export default function AuthPage() {
             {loading ? 'Please wait...' : isLogin ? 'Login' : 'Create Account'}
           </button>
 
-          {/* Switch Mode */}
+          {/* Switch */}
           <p className="text-center text-sm text-gray-500">
             {isLogin ? "Don't have an account?" : 'Already have an account?'}
             <button
@@ -295,6 +257,7 @@ export default function AuthPage() {
               {isLogin ? 'Register' : 'Login'}
             </button>
           </p>
+
         </div>
       </div>
     </div>
