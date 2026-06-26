@@ -1,11 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import supabase from '@/lib/supabase';
 
 export default function AuthPage() {
-  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [name, setName] = useState('');
   const [role, setRole] = useState('doctor');
@@ -15,25 +13,59 @@ export default function AuthPage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // ✅ If already logged in, redirect immediately
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      const userRole = profile?.role?.toLowerCase().trim();
+      if (userRole === 'admin') window.location.href = '/admin/dashboard';
+      else if (userRole === 'doctor') window.location.href = '/dashboard';
+      else window.location.href = '/jobs';
+    };
+
+    checkSession();
+  }, []);
+
   const handleLogin = async () => {
     setLoading(true);
     setMessage('');
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) { setMessage(error.message); setLoading(false); return; }
 
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', data.user.id)
-      .single();
+    if (error) {
+      setMessage(error.message);
+      setLoading(false);
+      return;
+    }
 
-    if (profileError) { setMessage('Error fetching profile'); setLoading(false); return; }
+    if (data.user) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
 
-    const userRole = profile?.role?.toLowerCase().trim();
-    if (userRole === 'admin') router.push('/admin/dashboard');
-    else if (userRole === 'doctor') router.push('/dashboard');
-    else router.push('/jobs');
+      if (profileError || !profile) {
+        setMessage('Error fetching profile. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      const userRole = profile?.role?.toLowerCase().trim();
+
+      // ✅ Force full page reload so navbar updates correctly
+      if (userRole === 'admin') window.location.href = '/admin/dashboard';
+      else if (userRole === 'doctor') window.location.href = '/dashboard';
+      else window.location.href = '/jobs';
+    }
 
     setLoading(false);
   };
@@ -43,29 +75,49 @@ export default function AuthPage() {
     setMessage('');
 
     if (!name || !email || !password) {
-      setMessage('Please fill all required fields');
+      setMessage('Please fill all required fields.');
       setLoading(false);
       return;
     }
 
     if (role === 'doctor' && !profession) {
-      setMessage('Please select your profession');
+      setMessage('Please select your profession.');
       setLoading(false);
       return;
     }
 
     const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) { setMessage(error.message); setLoading(false); return; }
+
+    if (error) {
+      setMessage(error.message);
+      setLoading(false);
+      return;
+    }
 
     if (data.user) {
-      const { error: insertError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        name,
-        role: role.toLowerCase().trim(),
-        profession: role === 'doctor' ? profession : null,
-      });
+      // Check if profile already exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', data.user.id)
+        .maybeSingle();
 
-      if (insertError) { setMessage(insertError.message); setLoading(false); return; }
+      if (!existingProfile) {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            name,
+            role: role.toLowerCase().trim(),
+            profession: role === 'doctor' ? profession : null,
+          });
+
+        if (insertError) {
+          setMessage(insertError.message);
+          setLoading(false);
+          return;
+        }
+      }
 
       setMessage('✅ Registered successfully! Please login.');
       setIsLogin(true);
@@ -88,24 +140,31 @@ export default function AuthPage() {
         <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
           <button
             onClick={() => setIsLogin(true)}
-            className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition ${isLogin ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
+            className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition ${
+              isLogin ? 'bg-white shadow text-gray-900' : 'text-gray-500'
+            }`}
           >
             Login
           </button>
           <button
             onClick={() => setIsLogin(false)}
-            className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition ${!isLogin ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
+            className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition ${
+              !isLogin ? 'bg-white shadow text-gray-900' : 'text-gray-500'
+            }`}
           >
             Register
           </button>
         </div>
 
         <div className="space-y-4">
+
           {/* Register Only Fields */}
           {!isLogin && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
+                </label>
                 <input
                   type="text"
                   placeholder="Dr. John Smith"
@@ -116,7 +175,9 @@ export default function AuthPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">I am a</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  I am a
+                </label>
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
@@ -129,7 +190,9 @@ export default function AuthPage() {
 
               {role === 'doctor' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Profession</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Profession
+                  </label>
                   <select
                     value={profession}
                     onChange={(e) => setProfession(e.target.value)}
@@ -140,7 +203,9 @@ export default function AuthPage() {
                     <option value="BDS">BDS</option>
                     <option value="BAMS">BAMS</option>
                     <option value="BHMS">BHMS</option>
+                    <option value="BUMS">BUMS</option>
                     <option value="Nursing">Nursing</option>
+                    <option value="Allied Healthcare">Allied Healthcare</option>
                   </select>
                 </div>
               )}
@@ -149,7 +214,9 @@ export default function AuthPage() {
 
           {/* Common Fields */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
             <input
               type="email"
               placeholder="you@example.com"
@@ -160,7 +227,9 @@ export default function AuthPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
             <input
               type="password"
               placeholder="Min. 8 characters"
@@ -170,9 +239,13 @@ export default function AuthPage() {
             />
           </div>
 
-          {/* Error / Success Message */}
+          {/* Message */}
           {message && (
-            <div className={`text-sm px-4 py-3 rounded-xl border ${message.startsWith('✅') ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600'}`}>
+            <div className={`text-sm px-4 py-3 rounded-xl border ${
+              message.startsWith('✅')
+                ? 'bg-green-50 border-green-200 text-green-700'
+                : 'bg-red-50 border-red-200 text-red-600'
+            }`}>
               {message}
             </div>
           )}
@@ -196,6 +269,7 @@ export default function AuthPage() {
               {isLogin ? 'Register' : 'Login'}
             </button>
           </p>
+
         </div>
       </div>
     </div>
