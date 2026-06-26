@@ -1,333 +1,326 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import supabase from "@/lib/supabase";
-import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import supabase from '@/lib/supabase';
 
 export default function Navbar() {
-
-  const [user, setUser] = useState<any>(null);
-  const [role, setRole] = useState<string | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
-
-  // 🔔 NOTIFICATIONS
-  const [notificationCount, setNotificationCount] = useState(0);
-
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const router = useRouter();
   const pathname = usePathname();
+  const [profile, setProfile] = useState<any>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // 🔐 GET USER + PROFILE + NOTIFICATIONS
   useEffect(() => {
+    fetchProfile();
+  }, [pathname]);
 
-    const getUser = async () => {
+  // Also listen to auth state changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          fetchProfile();
+        } else {
+          setProfile(null);
+          setUnreadCount(0);
+          setLoading(false);
+        }
+      }
+    );
 
-      const { data } = await supabase.auth.getUser();
+    return () => subscription.unsubscribe();
+  }, []);
 
-      const currentUser = data?.user;
+  async function fetchProfile() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
 
-      if (!currentUser) {
-        setUser(null);
+      if (!user) {
+        setProfile(null);
+        setLoading(false);
         return;
       }
 
-      setUser(currentUser);
-
-      // 👤 PROFILE
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, avatar_url")
-        .eq("id", currentUser.id)
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
         .single();
 
-      setRole(
-        profile?.role?.toLowerCase().trim() || null
-      );
+      setProfile(data || null);
 
-      setAvatarUrl(profile?.avatar_url || null);
+      if (data) {
+        const { count } = await supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false);
 
-      // 🔔 FETCH UNREAD NOTIFICATIONS
-      const { count } = await supabase
-        .from("notifications")
-        .select("*", {
-          count: "exact",
-          head: true,
-        })
-        .eq("user_id", currentUser.id)
-        .eq("is_read", false);
-
-      setNotificationCount(count || 0);
-    };
-
-    getUser();
-
-  }, []);
-
-  // ❌ CLOSE DROPDOWN
-  useEffect(() => {
-
-    const handleOutside = (e: any) => {
-
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target)
-      ) {
-        setOpen(false);
+        setUnreadCount(count || 0);
       }
+    } catch (err) {
+      console.log('Navbar fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-    };
-
-    document.addEventListener(
-      "mousedown",
-      handleOutside
-    );
-
-    return () =>
-      document.removeEventListener(
-        "mousedown",
-        handleOutside
-      );
-
-  }, []);
-
-  // 🚪 LOGOUT
-  const handleLogout = async () => {
-
+  async function handleLogout() {
     await supabase.auth.signOut();
-
-    setUser(null);
-
-    router.push("/auth");
-  };
-
-  // 🎯 ACTIVE LINK
-  const linkClass = (path: string) => {
-
-    const active = pathname === path;
-
-    return `
-      transition hover:text-black relative
-      ${active
-        ? "text-black font-semibold"
-        : "text-gray-600"}
-    `;
-  };
+    setProfile(null);
+    setUnreadCount(0);
+    setDropdownOpen(false);
+    window.location.replace('/');
+  }
 
   return (
+    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
 
-    <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-lg">
-
-      <div className="max-w-7xl mx-auto px-4 md:px-6">
-
-        <div className="h-16 flex items-center justify-between">
-
-          {/* 🏥 LOGO */}
-          <a
-            href="/"
-            className="text-xl font-bold tracking-tight"
-          >
+          {/* Logo */}
+          <Link href="/" className="text-2xl font-bold text-blue-600">
             MedCareer
-          </a>
+          </Link>
 
-          {/* RIGHT SIDE */}
-          <div className="flex items-center gap-3 md:gap-6 text-sm">
+          {/* Nav Links */}
+          <div className="hidden md:flex items-center gap-6">
+            <Link
+              href="/jobs"
+              className="text-gray-600 hover:text-blue-600 font-medium transition"
+            >
+              Browse Jobs
+            </Link>
 
-            {/* NOT LOGGED IN */}
-            {!user && (
-
-              <a
-                href="/auth"
-                className="bg-black text-white px-5 py-2 rounded-full hover:opacity-90 transition"
-              >
-                Login
-              </a>
-
-            )}
-
-            {/* LOGGED IN */}
-            {user && (
+            {profile?.role === 'doctor' && (
               <>
-
-                {/* JOBS */}
-                <a
-                  href="/jobs"
-                  className={linkClass("/jobs")}
+                <Link
+                  href="/applications"
+                  className="text-gray-600 hover:text-blue-600 font-medium transition"
                 >
-                  Jobs
-                </a>
-
-                {/* 🔔 NOTIFICATIONS */}
-                <a
-                  href="/notifications"
-                  className={linkClass("/notifications")}
+                  Applications
+                </Link>
+                <Link
+                  href="/saved-jobs"
+                  className="text-gray-600 hover:text-blue-600 font-medium transition"
                 >
-                  <div className="relative">
-
-                    <span>
-                      Notifications
-                    </span>
-
-                    {/* BADGE */}
-                    {notificationCount > 0 && (
-                      <span className="absolute -top-2 -right-4 bg-red-500 text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center font-medium">
-                        {notificationCount}
-                      </span>
-                    )}
-
-                  </div>
-                </a>
-
-                {/* 👨‍⚕️ DOCTOR */}
-                {role === "doctor" && (
-                  <>
-                    <a
-                      href="/dashboard"
-                      className={linkClass("/dashboard")}
-                    >
-                      Dashboard
-                    </a>
-
-                    <a
-                      href="/applications"
-                      className={linkClass("/applications")}
-                    >
-                      Applications
-                    </a>
-                  </>
-                )}
-
-                {/* 🏥 ADMIN */}
-                {role === "admin" && (
-                  <>
-                    <a
-                      href="/admin/dashboard"
-                      className={linkClass("/admin/dashboard")}
-                    >
-                      Admin
-                    </a>
-
-                    <a
-                      href="/admin/analytics"
-                      className={linkClass("/admin/analytics")}
-                    >
-                      Analytics
-                    </a>
-
-                    <a
-                      href="/post-job"
-                      className={linkClass("/post-job")}
-                    >
-                      Post Job
-                    </a>
-                  </>
-                )}
-
-                {/* 👤 PROFILE DROPDOWN */}
-                <div
-                  className="relative"
-                  ref={dropdownRef}
-                >
-
-                  {/* AVATAR */}
-                  {avatarUrl ? (
-
-                    <img
-                      src={avatarUrl}
-                      alt="avatar"
-                      onClick={() => setOpen(!open)}
-                      className="w-10 h-10 rounded-full object-cover border cursor-pointer hover:scale-105 transition"
-                    />
-
-                  ) : (
-
-                    <div
-                      onClick={() => setOpen(!open)}
-                      className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center cursor-pointer font-semibold"
-                    >
-                      {user.email?.[0]?.toUpperCase()}
-                    </div>
-
-                  )}
-
-                  {/* DROPDOWN */}
-                  {open && (
-
-                    <div className="absolute right-0 mt-3 w-56 bg-white border rounded-2xl shadow-xl overflow-hidden">
-
-                      {/* USER INFO */}
-                      <div className="px-4 py-3 border-b">
-
-                        <p className="text-xs text-gray-500">
-                          Signed in as
-                        </p>
-
-                        <p className="text-sm font-medium truncate mt-1">
-                          {user.email}
-                        </p>
-
-                      </div>
-
-                      {/* PROFILE */}
-                      <a
-                        href="/profile"
-                        className="block px-4 py-3 text-sm hover:bg-gray-100 transition"
-                      >
-                        Profile
-                      </a>
-
-                      {/* DASHBOARD */}
-                      <a
-                        href={
-                          role === "admin"
-                            ? "/admin/dashboard"
-                            : "/dashboard"
-                        }
-                        className="block px-4 py-3 text-sm hover:bg-gray-100 transition"
-                      >
-                        Dashboard
-                      </a>
-
-                      {/* NOTIFICATIONS */}
-                      <a
-                        href="/notifications"
-                        className="flex items-center justify-between px-4 py-3 text-sm hover:bg-gray-100 transition"
-                      >
-                        <span>
-                          Notifications
-                        </span>
-
-                        {notificationCount > 0 && (
-                          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                            {notificationCount}
-                          </span>
-                        )}
-                      </a>
-
-                      {/* LOGOUT */}
-                      <button
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition"
-                      >
-                        Logout
-                      </button>
-
-                    </div>
-
-                  )}
-
-                </div>
-
+                  Saved Jobs
+                </Link>
               </>
             )}
 
+            {profile?.role === 'admin' && (
+              <>
+                <Link
+                  href="/admin/dashboard"
+                  className="text-gray-600 hover:text-blue-600 font-medium transition"
+                >
+                  Admin
+                </Link>
+                <Link
+                  href="/admin/analytics"
+                  className="text-gray-600 hover:text-blue-600 font-medium transition"
+                >
+                  Analytics
+                </Link>
+                <Link
+                  href="/post-job"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+                >
+                  Post Job
+                </Link>
+              </>
+            )}
           </div>
 
+          {/* Right Side */}
+          <div className="flex items-center gap-4">
+
+            {/* Show Login button only when not loading and no profile */}
+            {!loading && !profile && (
+              <Link
+                href="/auth"
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+              >
+                Login
+              </Link>
+            )}
+
+            {/* Show user controls when logged in */}
+            {!loading && profile && (
+              <>
+                {/* Notification Bell */}
+                <Link
+                  href="/notifications"
+                  className="relative text-gray-600 hover:text-blue-600"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Link>
+
+                {/* Avatar Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center gap-2 focus:outline-none"
+                  >
+                    {profile.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        className="w-9 h-9 rounded-full object-cover border-2 border-blue-200"
+                        alt="avatar"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm border-2 border-blue-200">
+                        {profile.name?.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <svg
+                      className="w-4 h-4 text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {dropdownOpen && (
+                    <>
+                      {/* Backdrop to close dropdown */}
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setDropdownOpen(false)}
+                      />
+
+                      <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+                        {/* User Info */}
+                        <div className="px-4 py-2 border-b border-gray-100">
+                          <p className="font-semibold text-gray-800 text-sm">
+                            {profile.name}
+                          </p>
+                          <p className="text-xs text-gray-500 capitalize">
+                            {profile.role}
+                          </p>
+                        </div>
+
+                        {/* Doctor Links */}
+                        {profile.role === 'doctor' && (
+                          <>
+                            <Link
+                              href="/dashboard"
+                              onClick={() => setDropdownOpen(false)}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            >
+                              Dashboard
+                            </Link>
+                            <Link
+                              href="/applications"
+                              onClick={() => setDropdownOpen(false)}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            >
+                              My Applications
+                            </Link>
+                            <Link
+                              href="/saved-jobs"
+                              onClick={() => setDropdownOpen(false)}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            >
+                              Saved Jobs
+                            </Link>
+                          </>
+                        )}
+
+                        {/* Admin Links */}
+                        {profile.role === 'admin' && (
+                          <>
+                            <Link
+                              href="/admin/dashboard"
+                              onClick={() => setDropdownOpen(false)}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            >
+                              Admin Dashboard
+                            </Link>
+                            <Link
+                              href="/admin/analytics"
+                              onClick={() => setDropdownOpen(false)}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            >
+                              Analytics
+                            </Link>
+                            <Link
+                              href="/post-job"
+                              onClick={() => setDropdownOpen(false)}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            >
+                              Post a Job
+                            </Link>
+                          </>
+                        )}
+
+                        {/* Common Links */}
+                        <Link
+                          href="/profile"
+                          onClick={() => setDropdownOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          My Profile
+                        </Link>
+                        <Link
+                          href="/notifications"
+                          onClick={() => setDropdownOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          Notifications
+                          {unreadCount > 0 && (
+                            <span className="ml-2 bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full">
+                              {unreadCount}
+                            </span>
+                          )}
+                        </Link>
+
+                        <hr className="my-1" />
+
+                        {/* Logout */}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          Logout
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
-
       </div>
-
-    </header>
+    </nav>
   );
 }
