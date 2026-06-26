@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import supabase from '@/lib/supabase';
 
 export default function AuthPage() {
@@ -12,12 +12,20 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const redirected = useRef(false);
 
-  // ✅ If already logged in, redirect immediately
+  // Check if already logged in — only runs once
   useEffect(() => {
     const checkSession = async () => {
+      if (redirected.current) return;
+
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+
+      if (!user) {
+        setChecking(false);
+        return;
+      }
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -25,10 +33,19 @@ export default function AuthPage() {
         .eq('id', user.id)
         .single();
 
-      const userRole = profile?.role?.toLowerCase().trim();
+      if (!profile) {
+        setChecking(false);
+        return;
+      }
+
+      redirected.current = true;
+      const userRole = profile.role?.toLowerCase().trim();
+
       if (userRole === 'admin') window.location.href = '/admin/dashboard';
       else if (userRole === 'doctor') window.location.href = '/dashboard';
-      else window.location.href = '/jobs';
+      else {
+        setChecking(false);
+      }
     };
 
     checkSession();
@@ -38,7 +55,10 @@ export default function AuthPage() {
     setLoading(true);
     setMessage('');
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
     if (error) {
       setMessage(error.message);
@@ -59,9 +79,7 @@ export default function AuthPage() {
         return;
       }
 
-      const userRole = profile?.role?.toLowerCase().trim();
-
-      // ✅ Force full page reload so navbar updates correctly
+      const userRole = profile.role?.toLowerCase().trim();
       if (userRole === 'admin') window.location.href = '/admin/dashboard';
       else if (userRole === 'doctor') window.location.href = '/dashboard';
       else window.location.href = '/jobs';
@@ -95,7 +113,6 @@ export default function AuthPage() {
     }
 
     if (data.user) {
-      // Check if profile already exists
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('id')
@@ -125,6 +142,15 @@ export default function AuthPage() {
 
     setLoading(false);
   };
+
+  // Show blank screen while checking session
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-gray-400 animate-pulse">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -269,7 +295,6 @@ export default function AuthPage() {
               {isLogin ? 'Register' : 'Login'}
             </button>
           </p>
-
         </div>
       </div>
     </div>
